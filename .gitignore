@@ -1,0 +1,42 @@
+# Build output
+**/bin/
+**/obj/
+**/TestResults/
+**/coverage/
+*.trx
+*.coverage
+*.coveragexml
+
+# IDE and user settings
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Runtime and diagnostic files
+*.log
+*.tmp
+*.pid
+
+# Local databases
+*.db
+*.db-shm
+*.db-wal
+*.mdf
+*.ldf
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+appsettings.Local.json
+appsettings.*.Local.json
+secrets.json
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini

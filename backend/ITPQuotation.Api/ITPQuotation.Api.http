@@ -1,0 +1,46 @@
+@host = http://localhost:5263
+
+GET {{host}}/api/customers
+Accept: application/json
+
+### Create customer
+POST {{host}}/api/customers
+Content-Type: application/json
+
+{"customerName":"Example Customer","email":"buyer@example.com"}
+
+### Replace IDs below with IDs returned by creation requests
+POST {{host}}/api/rfqs
+Content-Type: application/json
+
+{"rfqNumber":"RFQ-001","customerId":1,"status":"Draft"}
+
+### Create item
+POST {{host}}/api/rfqs/1/items
+Content-Type: application/json
+
+{"materialNo":"MAT-001","description":"Sample item","quantity":2.5,"unit":"Nos"}
+
+### List items
+GET {{host}}/api/rfqs/1/items
+
+### Look up Mastersheet data for an RFQ item
+GET {{host}}/api/rfqs/1/items/1/master
+
+### Search materials
+GET {{host}}/api/materials?search=MAT&isActive=true
+
+### Get a material and its ordered routing
+GET {{host}}/api/materials/MAT-001
+
+### List metal/density master
+GET {{host}}/api/metals?isActive=true
+
+### List process master
+GET {{host}}/api/processes?isActive=true
+
+### List vendors
+GET {{host}}/api/vendors?isActive=true
+
+### List vendor rates
+GET {{host}}/api/vendor-process-rates
