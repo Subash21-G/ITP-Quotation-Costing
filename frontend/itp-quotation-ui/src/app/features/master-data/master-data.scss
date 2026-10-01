@@ -1,0 +1,41 @@
+.master-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 18px;
+  align-items: start;
+
+  &.single { grid-template-columns: 1fr; }
+}
+
+.quick-create {
+  position: sticky;
+  top: 20px;
+  padding: 22px;
+
+  header {
+    margin-bottom: 18px;
+
+    span {
+      color: #73827a;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    h3 {
+      margin: 4px 0 0;
+      font: 700 17px 'Manrope', sans-serif;
+    }
+  }
+
+  mat-form-field,
+  button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  .master-layout { grid-template-columns: 1fr; }
+  .quick-create { position: static; }
+}

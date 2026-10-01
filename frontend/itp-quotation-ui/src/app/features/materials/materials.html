@@ -1,0 +1,71 @@
+<div class="page-heading">
+  <div><h2>Material masters</h2><p>Reusable engineering detail, raw stock, and manufacturing routes.</p></div>
+  <button mat-flat-button (click)="newMaterial()">New material</button>
+</div>
+
+<div class="materials-layout">
+  <section class="surface material-list">
+    <div class="search">
+      <input [(ngModel)]="search" (keyup.enter)="loadRows()" placeholder="Search material or description" />
+      <button mat-button (click)="loadRows()">Search</button>
+    </div>
+    <div class="list-scroll">
+      @for (material of rows(); track material.id) {
+        <button class="material-row" [class.active]="form.id === material.id" (click)="select(material)">
+          <span class="material-code">{{ material.materialNo }}</span>
+          <strong>{{ material.shortDescription || 'No description' }}</strong>
+          <small>{{ material.grade || 'Grade not set' }} · {{ material.rawMaterialShape || 'Shape not set' }}</small>
+        </button>
+      } @empty {
+        <div class="empty-list">No matching materials.</div>
+      }
+    </div>
+  </section>
+
+  <div class="editor-stack">
+    <section class="surface editor">
+      <header><div><span>Material information</span><h3>{{ form.id ? form.materialNo : 'New material master' }}</h3></div><button mat-flat-button [disabled]="saving()" (click)="saveMaterial()">Save material</button></header>
+      <div class="form-grid">
+        <mat-form-field appearance="outline"><mat-label>Material number</mat-label><input matInput [(ngModel)]="form.materialNo" /></mat-form-field>
+        <mat-form-field appearance="outline" class="span-2"><mat-label>Short description</mat-label><input matInput [(ngModel)]="form.shortDescription" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Grade</mat-label><input matInput [(ngModel)]="form.grade" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Drawing code</mat-label><input matInput [(ngModel)]="form.drawingCode" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Drawing version</mat-label><input matInput [(ngModel)]="form.drawingVersion" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Finish size</mat-label><input matInput [(ngModel)]="form.finishSize" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Metal / density</mat-label><mat-select [(ngModel)]="form.metalMaterialId"><mat-option [value]="undefined">Not set</mat-option>@for (metal of metals(); track metal.id) { <mat-option [value]="metal.id">{{ metal.name }} {{ metal.grade || '' }}</mat-option> }</mat-select></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Raw material shape</mat-label><input matInput [(ngModel)]="form.rawMaterialShape" /></mat-form-field>
+        <mat-form-field appearance="outline" class="span-2"><mat-label>Raw material dimensions</mat-label><input matInput [(ngModel)]="form.rawMaterialSize" /></mat-form-field>
+        <mat-form-field appearance="outline" class="span-3"><mat-label>Notes</mat-label><textarea matInput rows="2" [(ngModel)]="form.notes"></textarea></mat-form-field>
+      </div>
+    </section>
+
+    <section class="surface routing">
+      <header><div><span>Manufacturing route</span><h3>Ordered process plan</h3></div><span class="route-count">{{ routes().length }} operations</span></header>
+      @for (route of routes(); track route.id; let index = $index) {
+        <div class="route-row">
+          <span class="sequence">{{ route.sequence }}</span>
+          <div><strong>{{ route.processName }}</strong><small>{{ route.processType }}{{ route.vendorName ? ' · ' + route.vendorName : '' }}</small></div>
+          <div class="route-rate"><strong>₹{{ route.processType === 'Outsource' ? route.ratePerPiece : route.machineRate }}</strong><small>{{ route.processType === 'Outsource' ? '/piece' : '/hour' }}</small></div>
+          <div class="route-actions"><button (click)="moveRoute(index, -1)" [disabled]="index === 0">↑</button><button (click)="moveRoute(index, 1)" [disabled]="index === routes().length - 1">↓</button><button class="danger" (click)="removeRoute(route)">×</button></div>
+        </div>
+      } @empty {
+        <div class="empty-route">Save the material, then add its first manufacturing operation.</div>
+      }
+
+      @if (form.id) {
+        <div class="route-form">
+          <mat-form-field appearance="outline"><mat-label>Sequence</mat-label><input matInput type="number" [(ngModel)]="routeForm.sequence" /></mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Process</mat-label><mat-select [(ngModel)]="routeForm.processId">@for (process of processes(); track process.id) { <mat-option [value]="process.id">{{ process.processName }}</mat-option> }</mat-select></mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Type</mat-label><mat-select [(ngModel)]="routeForm.processType"><mat-option value="InHouse">In-house</mat-option><mat-option value="Outsource">Outsource</mat-option></mat-select></mat-form-field>
+          @if (routeForm.processType === 'Outsource') {
+            <mat-form-field appearance="outline"><mat-label>Vendor</mat-label><mat-select [(ngModel)]="routeForm.vendorId">@for (vendor of vendors(); track vendor.id) { <mat-option [value]="vendor.id">{{ vendor.vendorName }}</mat-option> }</mat-select></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Rate / piece</mat-label><input matInput type="number" [(ngModel)]="routeForm.ratePerPiece" /></mat-form-field>
+          } @else {
+            <mat-form-field appearance="outline"><mat-label>Machine rate / hr</mat-label><input matInput type="number" [(ngModel)]="routeForm.machineRate" /></mat-form-field>
+          }
+          <button mat-stroked-button (click)="addRoute()">Add process</button>
+        </div>
+      }
+    </section>
+  </div>
+</div>

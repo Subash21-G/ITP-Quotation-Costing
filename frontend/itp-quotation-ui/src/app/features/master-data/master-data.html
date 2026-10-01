@@ -1,0 +1,44 @@
+<div class="page-heading">
+  <div><h2>{{ title() }}</h2><p>{{ description() }}</p></div>
+</div>
+
+<div class="master-layout" [class.single]="!canCreate()">
+  <section class="surface list-card">
+    <div class="list-toolbar"><div><strong>{{ rows().length }} records</strong><span>Active master data</span></div><span class="legend"><i></i> API connected</span></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>@for (field of fields(); track field.key) { <th>{{ field.label }}</th> }</tr></thead>
+        <tbody>
+          @for (row of rows(); track $index) {
+            <tr>@for (field of fields(); track field.key) { <td>{{ value(row, field.key) }}</td> }</tr>
+          } @empty {
+            <tr><td [attr.colspan]="fields().length" class="empty-row">{{ loading() ? 'Loading…' : 'No records available.' }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  @if (canCreate()) {
+    <aside class="surface quick-create">
+      <header><span>Quick create</span><h3>Add {{ title().toLowerCase() }}</h3></header>
+      @if (type() === 'metals') {
+        <mat-form-field appearance="outline"><mat-label>Metal name</mat-label><input matInput [(ngModel)]="form['name']" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Grade</mat-label><input matInput [(ngModel)]="form['grade']" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Density kg/m³</mat-label><input matInput type="number" [(ngModel)]="form['densityKgM3']" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Default rate / kg</mat-label><input matInput type="number" [(ngModel)]="form['defaultRatePerKg']" /></mat-form-field>
+      } @else if (type() === 'processes') {
+        <mat-form-field appearance="outline"><mat-label>Process name</mat-label><input matInput [(ngModel)]="form['processName']" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Process type</mat-label><mat-select [(ngModel)]="form['defaultProcessType']"><mat-option value="InHouse">In-house</mat-option><mat-option value="Outsource">Outsource</mat-option></mat-select></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Machine rate / hr</mat-label><input matInput type="number" [(ngModel)]="form['defaultMachineRate']" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Description</mat-label><textarea matInput [(ngModel)]="form['description']"></textarea></mat-form-field>
+      } @else {
+        <mat-form-field appearance="outline"><mat-label>Vendor name</mat-label><input matInput [(ngModel)]="form['vendorName']" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Contact person</mat-label><input matInput [(ngModel)]="form['contactPerson']" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Phone</mat-label><input matInput [(ngModel)]="form['phone']" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Email</mat-label><input matInput [(ngModel)]="form['email']" /></mat-form-field>
+      }
+      <button mat-flat-button (click)="save()">Create record</button>
+    </aside>
+  }
+</div>

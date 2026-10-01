@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace ITPQuotation.Api.Models;
 
 public class Rfq
@@ -16,4 +18,6 @@ public class Rfq
 
     public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 
+    [JsonIgnore]
+    public ICollection<RfqItem> Items { get; set; } = [];
 }

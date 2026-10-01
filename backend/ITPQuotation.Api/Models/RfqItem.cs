@@ -14,9 +14,15 @@ public class RfqItem
 
     public string? DrawingNo { get; set; }
 
+    public string? Grade { get; set; }
+
+    public string? Dimensions { get; set; }
+
     public decimal Quantity { get; set; }
 
     public string Unit { get; set; } = "Nos";
 
     public DateTime? DeliveryDate { get; set; }
+
+    public CostSheet? CostSheet { get; set; }
 }

@@ -65,6 +65,8 @@ public class RfqItemsController(ApplicationDbContext context) : ControllerBase
         item.MaterialNo = request.MaterialNo.Trim();
         item.Description = request.Description?.Trim();
         item.DrawingNo = request.DrawingNo?.Trim();
+        item.Grade = request.Grade?.Trim();
+        item.Dimensions = request.Dimensions?.Trim();
         item.Quantity = request.Quantity;
         item.Unit = request.Unit.Trim();
         item.DeliveryDate = request.DeliveryDate;

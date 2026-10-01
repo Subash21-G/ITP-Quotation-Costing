@@ -1,0 +1,139 @@
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">RFQ intake</p>
+    <h2>Import RFQ PDF</h2>
+    <p>Extract suggestions, correct every field, then explicitly confirm the RFQ.</p>
+  </div>
+  <button mat-stroked-button routerLink="/rfqs">Back to RFQs</button>
+</div>
+
+@if (error()) {
+  <div class="error-banner">{{ error() }}</div>
+}
+
+<div class="import-flow">
+  <section class="surface upload-card" [class.complete]="extraction()">
+    <div class="step-number">1</div>
+    <div>
+      <span class="section-label">Upload</span>
+      <h3>Select the customer RFQ</h3>
+      <p>Text-based PDF, maximum 10 MB. The upload is not saved during extraction.</p>
+    </div>
+    <label class="file-drop">
+      <input type="file" accept="application/pdf,.pdf" (change)="chooseFile($event)" />
+      <span class="file-icon">PDF</span>
+      <strong>{{ selectedFile()?.name || 'Choose RFQ PDF' }}</strong>
+      <small>
+        {{ selectedFile() ? ((selectedFile()!.size / 1024).toFixed(1) + ' KB selected') : 'Click to browse' }}
+      </small>
+    </label>
+    <button mat-flat-button [disabled]="busy() || !selectedFile()" (click)="extract()">
+      {{ busy() && !extraction() ? 'Extracting…' : 'Extract fields' }}
+    </button>
+  </section>
+
+  @if (extraction(); as result) {
+    <section class="surface review-card">
+      <header>
+        <div class="step-number">2</div>
+        <div>
+          <span class="section-label">Read & Fix</span>
+          <h3>Review extracted suggestions</h3>
+          <p>{{ result.pageCount }} page PDF · {{ result.fileName }}</p>
+        </div>
+        <span class="review-badge">Not saved</span>
+      </header>
+
+      @if (result.warnings.length) {
+        <div class="warning-box">
+          <strong>Needs attention</strong>
+          @for (warning of result.warnings; track warning) { <span>{{ warning }}</span> }
+        </div>
+      }
+
+      <div class="rfq-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>RFQ number</mat-label>
+          <input matInput [(ngModel)]="review.rfqNumber" (ngModelChange)="reviewed = false" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Detected customer</mat-label>
+          <input matInput [value]="result.customerName || 'Not detected'" readonly />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Match customer</mat-label>
+          <mat-select [(ngModel)]="review.customerId" (ngModelChange)="reviewed = false">
+            @for (customer of customers(); track customer.id) {
+              <mat-option [value]="customer.id">{{ customer.customerName }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>RFQ date</mat-label>
+          <input matInput type="date" [(ngModel)]="review.rfqDate" (ngModelChange)="reviewed = false" />
+        </mat-form-field>
+      </div>
+
+      <div class="items-heading">
+        <div><span class="section-label">Items</span><h3>{{ review.items.length }} line item(s)</h3></div>
+        <button mat-stroked-button (click)="addItem()">Add item</button>
+      </div>
+
+      @for (item of review.items; track $index; let index = $index) {
+        <article class="item-card">
+          <div class="item-title">
+            <strong>Item {{ index + 1 }}</strong>
+            @if (review.items.length > 1) {
+              <button class="remove" type="button" (click)="removeItem(index)">Remove</button>
+            }
+          </div>
+          <div class="item-grid">
+            <mat-form-field appearance="outline"><mat-label>Line item</mat-label><input matInput [(ngModel)]="item.lineItem" (ngModelChange)="reviewed = false" /></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Material number</mat-label><input matInput [(ngModel)]="item.materialNo" (ngModelChange)="reviewed = false" /></mat-form-field>
+            <mat-form-field appearance="outline" class="span-2"><mat-label>Description</mat-label><input matInput [(ngModel)]="item.description" (ngModelChange)="reviewed = false" /></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Drawing</mat-label><input matInput [(ngModel)]="item.drawingNo" (ngModelChange)="reviewed = false" /></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Grade</mat-label><input matInput [(ngModel)]="item.grade" (ngModelChange)="reviewed = false" /></mat-form-field>
+            <mat-form-field appearance="outline" class="span-2"><mat-label>Dimensions</mat-label><input matInput [(ngModel)]="item.dimensions" (ngModelChange)="reviewed = false" /></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Quantity</mat-label><input matInput type="number" min="0.001" step="0.001" [(ngModel)]="item.quantity" (ngModelChange)="reviewed = false" /></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Unit</mat-label><input matInput [(ngModel)]="item.unit" (ngModelChange)="reviewed = false" /></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Delivery date</mat-label><input matInput type="date" [(ngModel)]="item.deliveryDate" (ngModelChange)="reviewed = false" /></mat-form-field>
+          </div>
+        </article>
+      }
+
+      <details class="raw-text">
+        <summary>View extracted PDF text</summary>
+        <pre>{{ result.extractedText }}</pre>
+      </details>
+    </section>
+
+    <section class="surface confirm-card">
+      <div class="step-number">3</div>
+      <div class="confirm-copy">
+        <span class="section-label">Confirmation</span>
+        <h3>Save only after human review</h3>
+        <p>No RFQ or item has been created yet.</p>
+        <label class="confirmation-check">
+          <input type="checkbox" [(ngModel)]="reviewed" />
+          I reviewed and corrected the RFQ header and every line item.
+        </label>
+      </div>
+      <button mat-flat-button [disabled]="busy() || !reviewed || saved()" (click)="confirm()">
+        {{ busy() ? 'Saving…' : 'Confirm and create RFQ' }}
+      </button>
+    </section>
+  }
+
+  @if (saved(); as confirmation) {
+    <section class="success-card">
+      <div class="success-mark">✓</div>
+      <div>
+        <strong>{{ confirmation.rfqNumber }} created</strong>
+        <span>{{ confirmation.itemCount }} reviewed item(s) saved.</span>
+      </div>
+      <a mat-flat-button routerLink="/new-quotation" [queryParams]="{ rfqId: confirmation.rfqId }">
+        Start costing
+      </a>
+    </section>
+  }
+</div>

@@ -54,6 +54,8 @@ public class RfqsController(ApplicationDbContext context) : ControllerBase
     {
         var rfq = await context.Rfqs.FindAsync(id);
         if (rfq is null) return NotFound();
+        if (await context.Quotations.AnyAsync(x => x.RfqId == id))
+            return Conflict("RFQ has quotations and cannot be deleted.");
         context.Rfqs.Remove(rfq);
         await context.SaveChangesAsync();
         return NoContent();

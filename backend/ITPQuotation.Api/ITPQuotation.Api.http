@@ -44,3 +44,111 @@ GET {{host}}/api/vendors?isActive=true
 
 ### List vendor rates
 GET {{host}}/api/vendor-process-rates
+
+### Calculate plate weight (dimensions in mm, density in kg/m3)
+POST {{host}}/api/calculations/metal-weight
+Content-Type: application/json
+
+{
+  "shape": "Plate",
+  "unit": "mm",
+  "mode": "LengthToWeight",
+  "densityKgM3": 7850,
+  "quantity": 2,
+  "length": 1000,
+  "width": 100,
+  "thickness": 10
+}
+
+### Calculate raw-material cost
+POST {{host}}/api/calculations/raw-material-cost
+Content-Type: application/json
+
+{
+  "weightPerPiece": 7.85,
+  "quantity": 10,
+  "materialRatePerKg": 80,
+  "scrapWeight": 5,
+  "scrapRecoveryRate": 20
+}
+
+### Calculate in-house process cost (times in hours)
+POST {{host}}/api/calculations/process-cost/in-house
+Content-Type: application/json
+
+{
+  "setupTime": 1,
+  "cycleTime": 0.25,
+  "quantity": 8,
+  "machineRatePerHour": 1000,
+  "labourCost": 200,
+  "toolCost": 300
+}
+
+### Calculate outsource process cost
+POST {{host}}/api/calculations/process-cost/outsource
+Content-Type: application/json
+
+{
+  "rateType": "PerKg",
+  "rate": 75,
+  "totalWeightKg": 20
+}
+
+### Create a cost sheet (replace rfqItemId with an existing item ID)
+POST {{host}}/api/cost-sheets
+Content-Type: application/json
+
+{
+  "rfqItemId": 1,
+  "quantity": 10,
+  "overheadPercent": 10,
+  "profitPercent": 20,
+  "lines": [
+    {
+      "sequence": 1,
+      "category": "Raw Material",
+      "description": "Steel material",
+      "amount": 1000
+    },
+    {
+      "sequence": 2,
+      "category": "CNC",
+      "description": "CNC machining",
+      "amount": 500
+    }
+  ]
+}
+
+### Get the cost sheet for an RFQ item
+GET {{host}}/api/cost-sheets/by-rfq-item/1
+
+### Create quotation revision 0 from costed RFQ item 1
+POST {{host}}/api/quotations
+Content-Type: application/json
+
+{
+  "quotationNumber": "QTN-001",
+  "customerId": 1,
+  "rfqId": 1,
+  "quotationDate": "2026-09-28",
+  "validUntil": "2026-10-28",
+  "paymentTerms": "30 days",
+  "deliveryTerms": "Ex works",
+  "deliveryTime": "4 weeks",
+  "freightTerms": "Extra",
+  "taxNotes": "Taxes extra",
+  "status": "Draft",
+  "items": [
+    {
+      "rfqItemId": 1,
+      "weightPerPieceKg": 7.85
+    }
+  ]
+}
+
+### List immutable quotation revisions
+GET {{host}}/api/quotations/1/revisions
+
+### Get revision 0 snapshot
+GET {{host}}/api/quotations/1/revisions/0

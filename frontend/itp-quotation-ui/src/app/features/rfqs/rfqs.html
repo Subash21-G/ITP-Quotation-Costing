@@ -1,0 +1,34 @@
+<div class="page-heading">
+  <div><h2>Request for quotations</h2><p>Customer demand waiting to be costed and converted.</p></div>
+  <div class="heading-actions">
+    <button mat-stroked-button routerLink="/rfqs/import">Import RFQ PDF</button>
+    <button mat-flat-button routerLink="/new-quotation">Cost an RFQ</button>
+  </div>
+</div>
+
+@if (error()) { <div class="error-banner">{{ error() }}</div> }
+
+<section class="surface list-card">
+  <div class="list-toolbar">
+    <div><strong>{{ rows().length }} RFQs</strong><span>Newest requests appear first</span></div>
+    <span class="legend"><i></i> Live backend data</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>RFQ number</th><th>Customer</th><th>RFQ date</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        @for (rfq of rows(); track rfq.id) {
+          <tr>
+            <td><strong>{{ rfq.rfqNumber }}</strong><small>#{{ rfq.id }}</small></td>
+            <td>{{ customerName(rfq.customerId) }}</td>
+            <td>{{ rfq.rfqDate ? (rfq.rfqDate | date: 'dd MMM yyyy') : 'Not specified' }}</td>
+            <td><span class="status-pill">{{ rfq.status }}</span></td>
+            <td><a routerLink="/new-quotation" [queryParams]="{ rfqId: rfq.id }">Open →</a></td>
+          </tr>
+        } @empty {
+          <tr><td colspan="5" class="empty-row">{{ loading() ? 'Loading RFQs…' : 'No RFQs available.' }}</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

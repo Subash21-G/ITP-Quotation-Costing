@@ -1,0 +1,125 @@
+<div class="page-heading">
+  <div><h2>Quotation workspace</h2><p>Load an RFQ item, calculate engineering cost, and create a protected quotation revision.</p></div>
+  <span class="workspace-state"><i></i> Draft workspace</span>
+</div>
+
+@if (error()) { <div class="error-banner">{{ error() }}</div> }
+
+<div class="workspace">
+  <div class="workspace-main">
+    <section class="surface section-card">
+      <header><span class="step">01</span><div><h3>RFQ & commercial details</h3><p>Select the source request and set quotation terms.</p></div></header>
+      <div class="form-grid four">
+        <mat-form-field appearance="outline"><mat-label>Customer</mat-label><mat-select [(ngModel)]="commercial.customerId" (selectionChange)="onCustomer()">@for (customer of customers(); track customer.id) { <mat-option [value]="customer.id">{{ customer.customerName }}</mat-option> }</mat-select></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>RFQ</mat-label><mat-select [(ngModel)]="commercial.rfqId" (selectionChange)="onRfq()">@for (rfq of rfqs(); track rfq.id) { <mat-option [value]="rfq.id">{{ rfq.rfqNumber }}</mat-option> }</mat-select></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>RFQ item</mat-label><mat-select [(ngModel)]="commercial.rfqItemId" (selectionChange)="onItem()">@for (item of items(); track item.id) { <mat-option [value]="item.id">{{ item.materialNo }} · {{ item.quantity }} {{ item.unit }}</mat-option> }</mat-select></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Quotation number</mat-label><input matInput [(ngModel)]="commercial.quotationNumber" placeholder="QTN-2026-001" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Payment terms</mat-label><input matInput [(ngModel)]="commercial.paymentTerms" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Delivery terms</mat-label><input matInput [(ngModel)]="commercial.deliveryTerms" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Delivery time</mat-label><input matInput [(ngModel)]="commercial.deliveryTime" /></mat-form-field>
+      </div>
+    </section>
+
+    <section class="surface section-card">
+      <header><span class="step">02</span><div><h3>Material & weight</h3><p>Load reusable material data, then calculate weight in SI units.</p></div><button mat-stroked-button (click)="loadMaterial()">Load material</button></header>
+      <div class="material-strip">
+        <mat-form-field appearance="outline"><mat-label>Material number</mat-label><input matInput [(ngModel)]="engineering.materialNo" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Metal</mat-label><mat-select [(ngModel)]="engineering.metalId" (selectionChange)="onMetal()">@for (metal of metals(); track metal.id) { <mat-option [value]="metal.id">{{ metal.name }} {{ metal.grade || '' }}</mat-option> }</mat-select></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Density kg/m³</mat-label><input matInput type="number" [(ngModel)]="engineering.densityKgM3" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Rate / kg</mat-label><input matInput type="number" [(ngModel)]="engineering.materialRatePerKg" (change)="calculateMaterialCost()" /></mat-form-field>
+      </div>
+
+      <div class="shape-picker">
+        @for (shape of shapes; track shape.value) {
+          <button [class.active]="engineering.shape === shape.value" (click)="engineering.shape = shape.value">
+            <span>{{ shape.glyph }}</span><strong>{{ shape.label }}</strong>
+          </button>
+        }
+      </div>
+
+      <div class="dimension-grid">
+        <mat-form-field appearance="outline"><mat-label>Unit</mat-label><mat-select [(ngModel)]="engineering.unit"><mat-option value="mm">mm</mat-option><mat-option value="cm">cm</mat-option><mat-option value="m">m</mat-option><mat-option value="inch">inch</mat-option></mat-select></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Length</mat-label><input matInput type="number" [(ngModel)]="engineering.length" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Quantity</mat-label><input matInput type="number" [(ngModel)]="engineering.quantity" /></mat-form-field>
+        @if (engineering.shape === 'RoundBar') {
+          <mat-form-field appearance="outline"><mat-label>Diameter</mat-label><input matInput type="number" [(ngModel)]="engineering.diameter" /></mat-form-field>
+        } @else if (engineering.shape === 'SquareBar' || engineering.shape === 'SquareTube') {
+          <mat-form-field appearance="outline"><mat-label>Side</mat-label><input matInput type="number" [(ngModel)]="engineering.side" /></mat-form-field>
+        } @else if (engineering.shape === 'RoundTube') {
+          <mat-form-field appearance="outline"><mat-label>Outer diameter</mat-label><input matInput type="number" [(ngModel)]="engineering.outerDiameter" /></mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Inner diameter</mat-label><input matInput type="number" [(ngModel)]="engineering.innerDiameter" /></mat-form-field>
+        } @else if (engineering.shape === 'HexBar') {
+          <mat-form-field appearance="outline"><mat-label>Across flats</mat-label><input matInput type="number" [(ngModel)]="engineering.acrossFlats" /></mat-form-field>
+        } @else {
+          <mat-form-field appearance="outline"><mat-label>Width</mat-label><input matInput type="number" [(ngModel)]="engineering.width" /></mat-form-field>
+          @if (engineering.shape === 'RectangularTube') {
+            <mat-form-field appearance="outline"><mat-label>Height</mat-label><input matInput type="number" [(ngModel)]="engineering.height" /></mat-form-field>
+          }
+        }
+        @if (['Plate', 'SquareTube', 'RectangularTube'].includes(engineering.shape)) {
+          <mat-form-field appearance="outline"><mat-label>Thickness</mat-label><input matInput type="number" [(ngModel)]="engineering.thickness" /></mat-form-field>
+        }
+        <button class="calculate" mat-flat-button [disabled]="busy()" (click)="calculateWeight()">Calculate weight</button>
+      </div>
+
+      @if (weight(); as result) {
+        <div class="result-band">
+          <div><span>Weight / piece</span><strong>{{ result.weightPerPieceKg | number: '1.3-3' }} kg</strong></div>
+          <div><span>Total weight</span><strong>{{ result.totalWeightKg | number: '1.3-3' }} kg</strong></div>
+          <div><span>Volume / piece</span><strong>{{ result.volumePerPiece | number: '1.6-6' }} m³</strong></div>
+          <div><span>Material cost</span><strong>{{ rawMaterialCost() | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
+        </div>
+        <div class="scrap-row">
+          <mat-form-field appearance="outline"><mat-label>Scrap weight kg</mat-label><input matInput type="number" [(ngModel)]="engineering.scrapWeight" /></mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Recovery rate / kg</mat-label><input matInput type="number" [(ngModel)]="engineering.scrapRecoveryRate" /></mat-form-field>
+          <button mat-stroked-button (click)="calculateMaterialCost()">Update material cost</button>
+        </div>
+      }
+    </section>
+
+    <section class="surface section-card">
+      <header><span class="step">03</span><div><h3>Process route & additional costs</h3><p>Review loaded operations and enter the cost for this quotation quantity.</p></div></header>
+      <div class="cost-table">
+        <div class="cost-head"><span>#</span><span>Category</span><span>Description</span><span>Amount</span><span></span></div>
+        @for (line of processLines(); track $index; let index = $index) {
+          <div class="cost-row">
+            <span>{{ line.sequence }}</span>
+            <select [(ngModel)]="line.category">@for (category of categories; track category) { <option [value]="category">{{ category }}</option> }</select>
+            <input [(ngModel)]="line.description" placeholder="Operation or cost note" />
+            <input type="number" [(ngModel)]="line.amount" />
+            <button (click)="removeLine(index)">×</button>
+          </div>
+        }
+        <div class="cost-row add">
+          <span>+</span>
+          <select [(ngModel)]="newLine.category">@for (category of categories; track category) { <option [value]="category">{{ category }}</option> }</select>
+          <input [(ngModel)]="newLine.description" placeholder="Add process, packing, transport…" />
+          <input type="number" [(ngModel)]="newLine.amount" />
+          <button (click)="addLine()">Add</button>
+        </div>
+      </div>
+      <div class="margin-row">
+        <mat-form-field appearance="outline"><mat-label>Overhead %</mat-label><input matInput type="number" [(ngModel)]="margins.overheadPercent" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Profit %</mat-label><input matInput type="number" [(ngModel)]="margins.profitPercent" /></mat-form-field>
+      </div>
+    </section>
+  </div>
+
+  <aside class="summary surface">
+    <div class="summary-head"><span>Live cost summary</span><h3>{{ engineering.materialNo || 'Unselected item' }}</h3><p>{{ engineering.quantity }} piece quotation</p></div>
+    <div class="summary-lines">
+      <div><span>Raw material</span><strong>{{ rawMaterialCost() | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
+      <div><span>Process & additional</span><strong>{{ processCost() | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
+      <div class="subtotal"><span>Manufacturing cost</span><strong>{{ manufacturingCost() | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
+      <div><span>Overhead ({{ margins.overheadPercent }}%)</span><strong>{{ overheadAmount() | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
+      <div><span>Cost after overhead</span><strong>{{ costAfterOverhead() | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
+      <div><span>Profit ({{ margins.profitPercent }}%)</span><strong>{{ profitAmount() | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
+    </div>
+    <div class="grand-total"><span>Final quotation</span><strong>{{ finalPrice() | currency: 'INR' : 'symbol' : '1.2-2' }}</strong><small>{{ unitPrice() | currency: 'INR' : 'symbol' : '1.2-2' }} per piece</small></div>
+    <div class="summary-actions">
+      <button mat-stroked-button [disabled]="busy()" (click)="saveCostSheet()">{{ costSheet() ? 'Cost sheet saved' : 'Save cost sheet' }}</button>
+      <button mat-flat-button [disabled]="busy() || !costSheet()" (click)="createQuotation()">Create quotation</button>
+    </div>
+    <p class="snapshot-note">A revision snapshot will protect these rates, costs, and commercial terms.</p>
+  </aside>
+</div>

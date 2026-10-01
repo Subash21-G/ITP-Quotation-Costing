@@ -1,0 +1,35 @@
+.info-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.empty-state {
+  min-height: 24rem;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+  padding: 3rem;
+}
+
+.monogram {
+  width: 4rem;
+  height: 4rem;
+  display: grid;
+  place-items: center;
+  border-radius: 1rem;
+  background: #eaf0ff;
+  color: #1f4db8;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+h3 {
+  margin: 1.25rem 0 0.4rem;
+}
+
+.empty-state p {
+  max-width: 35rem;
+  margin: 0 0 1.5rem;
+  color: #657087;
+}

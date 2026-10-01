@@ -1,0 +1,91 @@
+<div class="page-heading">
+  <div>
+    <h2>Good morning, Estimator.</h2>
+    <p>Track incoming demand, costing readiness, and your active quotation pipeline.</p>
+  </div>
+  <button mat-flat-button routerLink="/new-quotation">Create quotation</button>
+</div>
+
+@if (error()) {
+  <div class="error-banner">{{ error() }}</div>
+}
+
+<div class="stats-grid">
+  <article class="stat surface">
+    <div class="stat-icon green">RFQ</div>
+    <div>
+      <span>Open RFQs</span>
+      <strong>{{ openRfqs() }}</strong>
+      <small>{{ rfqs().length }} total requests</small>
+    </div>
+  </article>
+  <article class="stat surface">
+    <div class="stat-icon amber">₹</div>
+    <div>
+      <span>Active pipeline</span>
+      <strong>{{ pipelineValue() | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+      <small>{{ quotations().length }} quotations</small>
+    </div>
+  </article>
+  <article class="stat surface">
+    <div class="stat-icon blue">M</div>
+    <div>
+      <span>Material masters</span>
+      <strong>{{ materials() }}</strong>
+      <small>Reusable cost profiles</small>
+    </div>
+  </article>
+  <article class="stat surface">
+    <div class="stat-icon plum">%</div>
+    <div>
+      <span>Quote conversion</span>
+      <strong>{{ conversion() | number: '1.0-1' }}%</strong>
+      <small>{{ customers() }} customers</small>
+    </div>
+  </article>
+</div>
+
+<div class="dashboard-grid">
+  <section class="surface activity">
+    <header>
+      <div><h3>Recent quotations</h3><p>Latest commercial activity and revisions</p></div>
+      <a routerLink="/quotations">View all</a>
+    </header>
+    @if (loading()) {
+      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    } @else if (quotations().length) {
+      <div class="quote-list">
+        @for (quote of quotations().slice(0, 6); track quote.id) {
+          <div class="quote-row">
+            <div class="quote-id"><span>Q</span></div>
+            <div class="quote-main">
+              <strong>{{ quote.quotationNumber }}</strong>
+              <small>{{ quote.customerName }} · {{ quote.rfqNumber }}</small>
+            </div>
+            <span class="status-pill">{{ quote.status }}</span>
+            <div class="quote-value">
+              <strong>{{ quote.totalPrice | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+              <small>Rev {{ quote.revision }}</small>
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="empty"><strong>No quotations yet</strong><span>Create your first costed quotation.</span></div>
+    }
+  </section>
+
+  <aside class="surface readiness">
+    <header><h3>Costing readiness</h3><p>Master data available to estimators</p></header>
+    <div class="readiness-score">
+      <div><strong>{{ materials() }}</strong><span>materials</span></div>
+      <div><strong>{{ openRfqs() }}</strong><span>open RFQs</span></div>
+    </div>
+    <div class="checklist">
+      <div><i class="done">✓</i><span><strong>Engineering calculators</strong><small>Weight, material and process cost</small></span></div>
+      <div><i class="done">✓</i><span><strong>Revision snapshots</strong><small>Historical pricing protected</small></span></div>
+      <div><i>3</i><span><strong>Build a quote</strong><small>Turn a cost sheet into a proposal</small></span></div>
+    </div>
+    <button mat-stroked-button routerLink="/masters/materials">Review masters</button>
+  </aside>
+</div>

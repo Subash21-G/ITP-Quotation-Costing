@@ -1,0 +1,20 @@
+<div class="info-page">
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">Workspace</p>
+      <h2>{{ title() }}</h2>
+      <p>{{ description() }}</p>
+    </div>
+  </div>
+
+  <section class="surface empty-state">
+    <div class="monogram">{{ kind() === 'reports' ? 'R' : 'S' }}</div>
+    <h3>{{ kind() === 'reports' ? 'Reporting foundation is ready' : 'Configuration area reserved' }}</h3>
+    <p>
+      {{ kind() === 'reports'
+        ? 'The quotation, revision, and cost-sheet data is available for the reporting phase.'
+        : 'Core master data is available from the Masters navigation while settings are developed.' }}
+    </p>
+    <button mat-flat-button routerLink="/dashboard">Return to dashboard</button>
+  </section>
+</div>

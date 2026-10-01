@@ -19,6 +19,11 @@ public class ApplicationDbContext : DbContext
     public DbSet<Vendor> Vendors => Set<Vendor>();
     public DbSet<VendorProcessRate> VendorProcessRates => Set<VendorProcessRate>();
     public DbSet<MaterialRouting> MaterialRoutings => Set<MaterialRouting>();
+    public DbSet<CostSheet> CostSheets => Set<CostSheet>();
+    public DbSet<CostSheetLine> CostSheetLines => Set<CostSheetLine>();
+    public DbSet<Quotation> Quotations => Set<Quotation>();
+    public DbSet<QuotationItem> QuotationItems => Set<QuotationItem>();
+    public DbSet<QuotationRevision> QuotationRevisions => Set<QuotationRevision>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -31,7 +36,7 @@ public class ApplicationDbContext : DbContext
             .OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<RfqItem>()
             .HasOne<Rfq>()
-            .WithMany()
+            .WithMany(x => x.Items)
             .HasForeignKey(x => x.RfqId)
             .OnDelete(DeleteBehavior.Cascade);
 
@@ -50,6 +55,12 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<RfqItem>()
             .Property(x => x.Quantity)
             .HasPrecision(18, 3);
+        modelBuilder.Entity<RfqItem>()
+            .Property(x => x.Grade)
+            .HasMaxLength(100);
+        modelBuilder.Entity<RfqItem>()
+            .Property(x => x.Dimensions)
+            .HasMaxLength(500);
 
         modelBuilder.Entity<MaterialMaster>(entity =>
         {
@@ -134,6 +145,90 @@ public class ApplicationDbContext : DbContext
                 .WithMany(x => x.MaterialRoutings)
                 .HasForeignKey(x => x.VendorId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<CostSheet>(entity =>
+        {
+            entity.Property(x => x.Quantity).HasPrecision(18, 3);
+            entity.Property(x => x.OverheadPercent).HasPrecision(18, 4);
+            entity.Property(x => x.ProfitPercent).HasPrecision(18, 4);
+            entity.HasIndex(x => x.RfqItemId).IsUnique();
+            entity.HasOne(x => x.RfqItem)
+                .WithOne(x => x.CostSheet)
+                .HasForeignKey<CostSheet>(x => x.RfqItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CostSheetLine>(entity =>
+        {
+            entity.Property(x => x.Category).HasMaxLength(50).IsRequired();
+            entity.Property(x => x.Description).HasMaxLength(500);
+            entity.Property(x => x.Amount).HasPrecision(18, 6);
+            entity.HasIndex(x => new { x.CostSheetId, x.Sequence }).IsUnique();
+            entity.HasOne(x => x.CostSheet)
+                .WithMany(x => x.Lines)
+                .HasForeignKey(x => x.CostSheetId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Quotation>(entity =>
+        {
+            entity.Property(x => x.QuotationNumber).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.PaymentTerms).HasMaxLength(500);
+            entity.Property(x => x.DeliveryTerms).HasMaxLength(500);
+            entity.Property(x => x.DeliveryTime).HasMaxLength(200);
+            entity.Property(x => x.FreightTerms).HasMaxLength(500);
+            entity.Property(x => x.TaxNotes).HasMaxLength(1000);
+            entity.Property(x => x.Status).HasMaxLength(30).IsRequired();
+            entity.HasIndex(x => x.QuotationNumber).IsUnique();
+            entity.HasIndex(x => new { x.CustomerId, x.QuotationDate });
+            entity.HasIndex(x => x.RfqId);
+            entity.HasOne(x => x.Customer)
+                .WithMany()
+                .HasForeignKey(x => x.CustomerId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.Rfq)
+                .WithMany()
+                .HasForeignKey(x => x.RfqId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<QuotationItem>(entity =>
+        {
+            entity.Property(x => x.MaterialNo).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.Description).HasMaxLength(4000);
+            entity.Property(x => x.DrawingNo).HasMaxLength(200);
+            entity.Property(x => x.Quantity).HasPrecision(18, 3);
+            entity.Property(x => x.MaterialRatePerKg).HasPrecision(18, 6);
+            entity.Property(x => x.DensityKgM3).HasPrecision(18, 6);
+            entity.Property(x => x.RawMaterialShape).HasMaxLength(50);
+            entity.Property(x => x.RawMaterialDimensions).HasMaxLength(500);
+            entity.Property(x => x.WeightPerPieceKg).HasPrecision(18, 6);
+            entity.Property(x => x.TotalWeightKg).HasPrecision(18, 6);
+            entity.Property(x => x.ManufacturingCost).HasPrecision(18, 6);
+            entity.Property(x => x.OverheadPercent).HasPrecision(18, 4);
+            entity.Property(x => x.OverheadAmount).HasPrecision(18, 6);
+            entity.Property(x => x.ProfitPercent).HasPrecision(18, 4);
+            entity.Property(x => x.ProfitAmount).HasPrecision(18, 6);
+            entity.Property(x => x.UnitPrice).HasPrecision(18, 6);
+            entity.Property(x => x.TotalPrice).HasPrecision(18, 6);
+            entity.Property(x => x.CostBreakdownJson).HasColumnType("nvarchar(max)");
+            entity.Property(x => x.ProcessRouteJson).HasColumnType("nvarchar(max)");
+            entity.HasIndex(x => new { x.QuotationId, x.RfqItemId }).IsUnique();
+            entity.HasOne(x => x.Quotation)
+                .WithMany(x => x.Items)
+                .HasForeignKey(x => x.QuotationId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<QuotationRevision>(entity =>
+        {
+            entity.Property(x => x.SnapshotJson).HasColumnType("nvarchar(max)");
+            entity.HasIndex(x => new { x.QuotationId, x.Revision }).IsUnique();
+            entity.HasOne(x => x.Quotation)
+                .WithMany(x => x.Revisions)
+                .HasForeignKey(x => x.QuotationId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

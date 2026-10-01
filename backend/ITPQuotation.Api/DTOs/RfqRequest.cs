@@ -30,6 +30,12 @@ public class RfqItemRequest
     [StringLength(200)]
     public string? DrawingNo { get; set; }
 
+    [StringLength(100)]
+    public string? Grade { get; set; }
+
+    [StringLength(500)]
+    public string? Dimensions { get; set; }
+
     [Range(typeof(decimal), "0.001", "999999999999999.999")]
     public decimal Quantity { get; set; }
 

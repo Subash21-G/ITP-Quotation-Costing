@@ -1,0 +1,78 @@
+<mat-sidenav-container class="app-shell">
+  <mat-sidenav
+    class="sidebar"
+    [opened]="mobileOpen()"
+    [mode]="'over'"
+    (closedStart)="mobileOpen.set(false)"
+  >
+    <ng-container *ngTemplateOutlet="navigation"></ng-container>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <aside class="desktop-sidebar">
+      <ng-container *ngTemplateOutlet="navigation"></ng-container>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="menu-button" mat-button (click)="mobileOpen.set(true)" aria-label="Open navigation">☰</button>
+        <div>
+          <p class="eyebrow">Indhra Turning Point</p>
+          <h1>{{ pageTitle() }}</h1>
+        </div>
+        <div class="topbar-actions">
+          <span class="environment"><i></i> Development</span>
+          <button mat-stroked-button routerLink="/new-quotation">New quote</button>
+        </div>
+      </header>
+
+      <section class="page">
+        <router-outlet />
+      </section>
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>
+
+<ng-template #navigation>
+  <div class="brand">
+    <div class="brand-mark">ITP</div>
+    <div>
+      <strong>Quotation</strong>
+      <span>Costing system</span>
+    </div>
+  </div>
+
+  <nav class="nav">
+    @for (item of navItems; track item.route) {
+      <a
+        [routerLink]="item.route"
+        routerLinkActive="active"
+        [class.accent]="item.accent"
+      >
+        <span class="nav-glyph">{{ item.glyph }}</span>
+        {{ item.label }}
+      </a>
+    }
+
+    <p class="nav-label">Masters</p>
+    @for (item of masterItems; track item.route) {
+      <a [routerLink]="item.route" routerLinkActive="active">
+        <span class="nav-glyph">{{ item.glyph }}</span>
+        {{ item.label }}
+      </a>
+    }
+
+    <mat-divider></mat-divider>
+    <a routerLink="/reports" routerLinkActive="active">
+      <span class="nav-glyph">↗</span> Reports
+    </a>
+    <a routerLink="/settings" routerLinkActive="active">
+      <span class="nav-glyph">⚙</span> Settings
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="avatar">IT</div>
+    <div><strong>Estimator</strong><span>Local workspace</span></div>
+  </div>
+</ng-template>

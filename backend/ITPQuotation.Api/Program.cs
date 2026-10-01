@@ -1,3 +1,4 @@
+using ITPQuotation.Api.Calculators;
 using ITPQuotation.Api.Common;
 using ITPQuotation.Api.Data;
 using ITPQuotation.Api.Services;
@@ -14,6 +15,15 @@ builder.Services.AddScoped<MetalMaterialService>();
 builder.Services.AddScoped<ProcessMasterService>();
 builder.Services.AddScoped<VendorService>();
 builder.Services.AddScoped<VendorProcessRateService>();
+builder.Services.AddSingleton<IMetalWeightCalculator, MetalWeightCalculator>();
+builder.Services.AddSingleton<IRawMaterialCostCalculator, RawMaterialCostCalculator>();
+builder.Services.AddSingleton<IProcessCostCalculator, ProcessCostCalculator>();
+builder.Services.AddSingleton<ICostSheetCalculator, CostSheetCalculator>();
+builder.Services.AddScoped<CostSheetService>();
+builder.Services.AddScoped<QuotationService>();
+builder.Services.AddSingleton<IRfqPdfTextExtractor, PdfPigRfqTextExtractor>();
+builder.Services.AddSingleton<RfqTextParser>();
+builder.Services.AddScoped<RfqImportService>();
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();

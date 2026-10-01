@@ -1,0 +1,266 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.app-shell {
+  min-height: 100vh;
+  background: #f3f5f7;
+}
+
+.desktop-sidebar,
+.sidebar {
+  width: 258px;
+  background: #132722;
+  color: #eaf4f0;
+}
+
+.desktop-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  display: flex;
+  flex-direction: column;
+  z-index: 4;
+}
+
+.sidebar {
+  padding: 0;
+}
+
+.brand {
+  height: 86px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 24px;
+  border-bottom: 1px solid rgb(255 255 255 / 9%);
+
+  .brand-mark {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: #e7b95c;
+    color: #17231f;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+  }
+
+  strong,
+  span {
+    display: block;
+  }
+
+  strong {
+    font: 700 17px/1.1 'Manrope', sans-serif;
+  }
+
+  span {
+    margin-top: 4px;
+    color: #9ab0a8;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+}
+
+.nav {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 5px;
+  padding: 22px 14px;
+
+  a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 42px;
+    padding: 0 12px;
+    border-radius: 10px;
+    color: #aec0b9;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 550;
+    transition: 160ms ease;
+
+    &:hover,
+    &.active {
+      background: rgb(255 255 255 / 8%);
+      color: white;
+    }
+
+    &.accent {
+      margin-bottom: 7px;
+      background: #e7b95c;
+      color: #17231f;
+
+      &:hover,
+      &.active {
+        background: #f1ca7b;
+      }
+    }
+  }
+
+  mat-divider {
+    margin: 13px 4px;
+    border-color: rgb(255 255 255 / 9%);
+  }
+}
+
+.nav-glyph {
+  width: 23px;
+  height: 23px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgb(255 255 255 / 18%);
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.nav-label {
+  margin: 13px 12px 5px;
+  color: #718a81;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.sidebar-footer {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin: auto 14px 16px;
+  padding: 13px;
+  border: 1px solid rgb(255 255 255 / 8%);
+  border-radius: 12px;
+  background: rgb(255 255 255 / 4%);
+
+  .avatar {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #315a4d;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  strong,
+  span {
+    display: block;
+  }
+
+  strong {
+    font-size: 13px;
+  }
+
+  span {
+    margin-top: 2px;
+    color: #829a91;
+    font-size: 11px;
+  }
+}
+
+.main {
+  min-height: 100vh;
+  margin-left: 258px;
+}
+
+.topbar {
+  height: 86px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 34px;
+  border-bottom: 1px solid #dce2df;
+  background: rgb(255 255 255 / 84%);
+  backdrop-filter: blur(12px);
+
+  h1 {
+    margin: 2px 0 0;
+    color: #16221e;
+    font: 700 21px/1.15 'Manrope', sans-serif;
+    letter-spacing: -0.025em;
+  }
+}
+
+.eyebrow {
+  margin: 0;
+  color: #78857f;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.environment {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border: 1px solid #dce4e0;
+  border-radius: 999px;
+  color: #52605a;
+  background: white;
+  font-size: 11px;
+  font-weight: 700;
+
+  i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #45a979;
+    box-shadow: 0 0 0 3px #dff4e9;
+  }
+}
+
+.page {
+  padding: 30px 34px 48px;
+}
+
+.menu-button {
+  display: none;
+  min-width: 42px;
+  padding: 0;
+}
+
+@media (max-width: 960px) {
+  .desktop-sidebar {
+    display: none;
+  }
+
+  .main {
+    margin-left: 0;
+  }
+
+  .menu-button {
+    display: inline-flex;
+  }
+
+  .page,
+  .topbar {
+    padding-inline: 20px;
+  }
+}
+
+@media (max-width: 620px) {
+  .environment {
+    display: none;
+  }
+
+  .topbar-actions button {
+    display: none;
+  }
+}

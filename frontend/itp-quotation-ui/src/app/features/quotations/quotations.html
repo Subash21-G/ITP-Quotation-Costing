@@ -1,0 +1,32 @@
+<div class="page-heading">
+  <div><h2>Quotations</h2><p>Commercial offers with protected costing revisions.</p></div>
+  <button mat-flat-button routerLink="/new-quotation">New quotation</button>
+</div>
+
+@if (error()) { <div class="error-banner">{{ error() }}</div> }
+
+<section class="surface list-card">
+  <div class="list-toolbar">
+    <div><strong>{{ rows().length }} quotations</strong><span>Each revision preserves its original rates</span></div>
+    <span class="legend"><i></i> Revision history on</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Quotation</th><th>Customer</th><th>RFQ</th><th>Date</th><th>Status</th><th class="right">Value</th></tr></thead>
+      <tbody>
+        @for (quote of rows(); track quote.id) {
+          <tr>
+            <td><strong>{{ quote.quotationNumber }}</strong><small>Revision {{ quote.revision }}</small></td>
+            <td>{{ quote.customerName }}</td>
+            <td>{{ quote.rfqNumber }}</td>
+            <td>{{ quote.quotationDate | date: 'dd MMM yyyy' }}</td>
+            <td><span class="status-pill">{{ quote.status }}</span></td>
+            <td class="right money">{{ quote.totalPrice | currency: 'INR' : 'symbol' : '1.2-2' }}</td>
+          </tr>
+        } @empty {
+          <tr><td colspan="6" class="empty-row">{{ loading() ? 'Loading quotations…' : 'No quotations created yet.' }}</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

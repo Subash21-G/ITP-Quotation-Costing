@@ -22,6 +22,78 @@ namespace ITPQuotation.Api.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("ITPQuotation.Api.Models.CostSheet", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("OverheadPercent")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("ProfitPercent")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<int>("RfqItemId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RfqItemId")
+                        .IsUnique();
+
+                    b.ToTable("CostSheets");
+                });
+
+            modelBuilder.Entity("ITPQuotation.Api.Models.CostSheetLine", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("CostSheetId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("Sequence")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CostSheetId", "Sequence")
+                        .IsUnique();
+
+                    b.ToTable("CostSheetLines");
+                });
+
             modelBuilder.Entity("ITPQuotation.Api.Models.Customer", b =>
                 {
                     b.Property<int>("Id")
@@ -262,6 +334,205 @@ namespace ITPQuotation.Api.Migrations
                     b.ToTable("ProcessMasters");
                 });
 
+            modelBuilder.Entity("ITPQuotation.Api.Models.Quotation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("DeliveryTerms")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("DeliveryTime")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("FreightTerms")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("PaymentTerms")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("QuotationDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("QuotationNumber")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("Revision")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RfqId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("TaxNotes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ValidUntil")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuotationNumber")
+                        .IsUnique();
+
+                    b.HasIndex("RfqId");
+
+                    b.HasIndex("CustomerId", "QuotationDate");
+
+                    b.ToTable("Quotations");
+                });
+
+            modelBuilder.Entity("ITPQuotation.Api.Models.QuotationItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CostBreakdownJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal?>("DensityKgM3")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("DrawingNo")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<decimal>("ManufacturingCost")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<string>("MaterialNo")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<decimal?>("MaterialRatePerKg")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<decimal>("OverheadAmount")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<decimal>("OverheadPercent")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("ProcessRouteJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("ProfitAmount")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<decimal>("ProfitPercent")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<int>("QuotationId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RawMaterialDimensions")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("RawMaterialShape")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("RfqItemId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<decimal?>("TotalWeightKg")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<decimal?>("WeightPerPieceKg")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuotationId", "RfqItemId")
+                        .IsUnique();
+
+                    b.ToTable("QuotationItems");
+                });
+
+            modelBuilder.Entity("ITPQuotation.Api.Models.QuotationRevision", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("QuotationId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Revision")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SnapshotJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuotationId", "Revision")
+                        .IsUnique();
+
+                    b.ToTable("QuotationRevisions");
+                });
+
             modelBuilder.Entity("ITPQuotation.Api.Models.Rfq", b =>
                 {
                     b.Property<int>("Id")
@@ -312,8 +583,16 @@ namespace ITPQuotation.Api.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Dimensions")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<string>("DrawingNo")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Grade")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("LineItem")
                         .HasColumnType("nvarchar(max)");
@@ -428,6 +707,28 @@ namespace ITPQuotation.Api.Migrations
                     b.ToTable("VendorProcessRates");
                 });
 
+            modelBuilder.Entity("ITPQuotation.Api.Models.CostSheet", b =>
+                {
+                    b.HasOne("ITPQuotation.Api.Models.RfqItem", "RfqItem")
+                        .WithOne("CostSheet")
+                        .HasForeignKey("ITPQuotation.Api.Models.CostSheet", "RfqItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("RfqItem");
+                });
+
+            modelBuilder.Entity("ITPQuotation.Api.Models.CostSheetLine", b =>
+                {
+                    b.HasOne("ITPQuotation.Api.Models.CostSheet", "CostSheet")
+                        .WithMany("Lines")
+                        .HasForeignKey("CostSheetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CostSheet");
+                });
+
             modelBuilder.Entity("ITPQuotation.Api.Models.MaterialMaster", b =>
                 {
                     b.HasOne("ITPQuotation.Api.Models.MetalMaterial", "MetalMaterial")
@@ -464,6 +765,47 @@ namespace ITPQuotation.Api.Migrations
                     b.Navigation("Vendor");
                 });
 
+            modelBuilder.Entity("ITPQuotation.Api.Models.Quotation", b =>
+                {
+                    b.HasOne("ITPQuotation.Api.Models.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ITPQuotation.Api.Models.Rfq", "Rfq")
+                        .WithMany()
+                        .HasForeignKey("RfqId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Rfq");
+                });
+
+            modelBuilder.Entity("ITPQuotation.Api.Models.QuotationItem", b =>
+                {
+                    b.HasOne("ITPQuotation.Api.Models.Quotation", "Quotation")
+                        .WithMany("Items")
+                        .HasForeignKey("QuotationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Quotation");
+                });
+
+            modelBuilder.Entity("ITPQuotation.Api.Models.QuotationRevision", b =>
+                {
+                    b.HasOne("ITPQuotation.Api.Models.Quotation", "Quotation")
+                        .WithMany("Revisions")
+                        .HasForeignKey("QuotationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Quotation");
+                });
+
             modelBuilder.Entity("ITPQuotation.Api.Models.Rfq", b =>
                 {
                     b.HasOne("ITPQuotation.Api.Models.Customer", null)
@@ -476,7 +818,7 @@ namespace ITPQuotation.Api.Migrations
             modelBuilder.Entity("ITPQuotation.Api.Models.RfqItem", b =>
                 {
                     b.HasOne("ITPQuotation.Api.Models.Rfq", null)
-                        .WithMany()
+                        .WithMany("Items")
                         .HasForeignKey("RfqId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -501,6 +843,11 @@ namespace ITPQuotation.Api.Migrations
                     b.Navigation("Vendor");
                 });
 
+            modelBuilder.Entity("ITPQuotation.Api.Models.CostSheet", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
             modelBuilder.Entity("ITPQuotation.Api.Models.MaterialMaster", b =>
                 {
                     b.Navigation("Routings");
@@ -516,6 +863,23 @@ namespace ITPQuotation.Api.Migrations
                     b.Navigation("MaterialRoutings");
 
                     b.Navigation("VendorProcessRates");
+                });
+
+            modelBuilder.Entity("ITPQuotation.Api.Models.Quotation", b =>
+                {
+                    b.Navigation("Items");
+
+                    b.Navigation("Revisions");
+                });
+
+            modelBuilder.Entity("ITPQuotation.Api.Models.Rfq", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("ITPQuotation.Api.Models.RfqItem", b =>
+                {
+                    b.Navigation("CostSheet");
                 });
 
             modelBuilder.Entity("ITPQuotation.Api.Models.Vendor", b =>
