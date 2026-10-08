@@ -38,6 +38,10 @@ export class ApiService {
     return this.http.get<RfqItem[]>(this.baseUrl + '/rfqs/' + rfqId + '/items');
   }
 
+  deleteRfq(rfqId: number): Observable<void> {
+    return this.http.delete<void>(this.baseUrl + '/rfqs/' + rfqId);
+  }
+
   extractRfqPdf(file: File): Observable<RfqPdfExtraction> {
     const form = new FormData();
     form.append('file', file, file.name);

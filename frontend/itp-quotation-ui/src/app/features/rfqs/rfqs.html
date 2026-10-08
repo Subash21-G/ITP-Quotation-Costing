@@ -23,7 +23,12 @@
             <td>{{ customerName(rfq.customerId) }}</td>
             <td>{{ rfq.rfqDate ? (rfq.rfqDate | date: 'dd MMM yyyy') : 'Not specified' }}</td>
             <td><span class="status-pill">{{ rfq.status }}</span></td>
-            <td><a routerLink="/new-quotation" [queryParams]="{ rfqId: rfq.id }">Open →</a></td>
+            <td>
+              <a routerLink="/new-quotation" [queryParams]="{ rfqId: rfq.id }">Open →</a>
+              <button mat-button type="button" [disabled]="deletingId() !== null" (click)="deleteRfq(rfq)">
+                {{ deletingId() === rfq.id ? 'Deleting…' : 'Delete' }}
+              </button>
+            </td>
           </tr>
         } @empty {
           <tr><td colspan="5" class="empty-row">{{ loading() ? 'Loading RFQs…' : 'No RFQs available.' }}</td></tr>

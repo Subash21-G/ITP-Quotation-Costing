@@ -48,6 +48,7 @@ export class QuotationWorkspace {
   protected readonly rfqs = signal<Rfq[]>([]);
   protected readonly items = signal<RfqItem[]>([]);
   protected readonly metals = signal<MetalMaterial[]>([]);
+  protected readonly detectedMetal = signal('');
   protected readonly master = signal<MaterialDetails | null>(null);
   protected readonly weight = signal<MetalWeightResult | null>(null);
   protected readonly rawMaterialCost = signal(0);
@@ -120,6 +121,7 @@ export class QuotationWorkspace {
     description: '',
     amount: 0,
   };
+  private generatedQuotationNumber = '';
 
   protected readonly processCost = computed(() =>
     this.processLines().reduce((total, line) => total + Number(line.amount || 0), 0),
@@ -159,7 +161,7 @@ export class QuotationWorkspace {
         });
       }
     });
-    this.api.metals().subscribe((rows) => this.metals.set(rows));
+    this.refreshMetalData();
   }
 
   protected onCustomer(): void {
@@ -180,6 +182,9 @@ export class QuotationWorkspace {
     if (!item) return;
     this.engineering.materialNo = item.materialNo;
     this.engineering.quantity = item.quantity;
+    this.detectedMetal.set(item.grade?.trim() ?? 'Material not detected');
+    this.generateQuotationNumber(item);
+    this.refreshMetalData(item);
     this.loadMaterial();
   }
 
@@ -188,6 +193,18 @@ export class QuotationWorkspace {
     if (!metal) return;
     this.engineering.densityKgM3 = metal.densityKgM3;
     this.engineering.materialRatePerKg = metal.defaultRatePerKg;
+  }
+
+  protected refreshMetalData(item?: RfqItem): void {
+    this.api.metals().subscribe({
+      next: (rows) => {
+        this.metals.set(rows.filter((metal) => metal.isActive));
+        const selectedItem =
+          item ?? this.items().find((row) => row.id === this.commercial.rfqItemId);
+        if (selectedItem) this.applyDetectedMetal(selectedItem);
+      },
+      error: () => this.snack.open('Metal rates could not be refreshed', 'Dismiss', { duration: 3000 }),
+    });
   }
 
   protected loadMaterial(): void {
@@ -216,7 +233,9 @@ export class QuotationWorkspace {
       },
       error: () => {
         this.master.set(null);
-        this.snack.open('No material master found; enter values manually', 'Dismiss', {
+        const item = this.items().find((row) => row.id === this.commercial.rfqItemId);
+        if (item) this.applyDetectedMetal(item);
+        this.snack.open('No material master found; using the RFQ grade and editable values', 'Dismiss', {
           duration: 3200,
         });
       },
@@ -382,6 +401,55 @@ export class QuotationWorkspace {
       (item) => item.value.toLowerCase() === (shape ?? '').replace(/\s/g, '').toLowerCase(),
     );
     return match?.value ?? 'Plate';
+  }
+
+  private applyDetectedMetal(item: RfqItem): void {
+    const grade = item.grade?.trim() ?? '';
+    this.detectedMetal.set(grade || 'Material not detected');
+    if (!grade) return;
+
+    const normalizedGrade = this.normalizeMaterialText(grade);
+    const metal = this.metals().find((candidate) => {
+      const candidateText = this.normalizeMaterialText(
+        `${candidate.name} ${candidate.grade ?? ''}`,
+      );
+      return (
+        candidateText === normalizedGrade ||
+        candidateText.includes(normalizedGrade) ||
+        normalizedGrade.includes(candidateText)
+      );
+    });
+    if (!metal) {
+      this.engineering.metalId = 0;
+      return;
+    }
+
+    this.engineering.metalId = metal.id;
+    this.engineering.densityKgM3 = metal.densityKgM3;
+    this.engineering.materialRatePerKg = metal.defaultRatePerKg;
+  }
+
+  private generateQuotationNumber(item: RfqItem): void {
+    if (
+      this.commercial.quotationNumber.trim() &&
+      this.commercial.quotationNumber !== this.generatedQuotationNumber
+    ) {
+      return;
+    }
+
+    const date = new Date();
+    const datePart = [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, '0'),
+      String(date.getDate()).padStart(2, '0'),
+    ].join('');
+    this.generatedQuotationNumber =
+      `QTN-${datePart}-${this.commercial.rfqId}-${item.materialNo}`;
+    this.commercial.quotationNumber = this.generatedQuotationNumber;
+  }
+
+  private normalizeMaterialText(value: string): string {
+    return value.toLowerCase().replace(/[^a-z0-9]/g, '');
   }
 
   private categoryFor(process: string, type: string): string {

@@ -13,7 +13,7 @@
         <mat-form-field appearance="outline"><mat-label>Customer</mat-label><mat-select [(ngModel)]="commercial.customerId" (selectionChange)="onCustomer()">@for (customer of customers(); track customer.id) { <mat-option [value]="customer.id">{{ customer.customerName }}</mat-option> }</mat-select></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>RFQ</mat-label><mat-select [(ngModel)]="commercial.rfqId" (selectionChange)="onRfq()">@for (rfq of rfqs(); track rfq.id) { <mat-option [value]="rfq.id">{{ rfq.rfqNumber }}</mat-option> }</mat-select></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>RFQ item</mat-label><mat-select [(ngModel)]="commercial.rfqItemId" (selectionChange)="onItem()">@for (item of items(); track item.id) { <mat-option [value]="item.id">{{ item.materialNo }} · {{ item.quantity }} {{ item.unit }}</mat-option> }</mat-select></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Quotation number</mat-label><input matInput [(ngModel)]="commercial.quotationNumber" placeholder="QTN-2026-001" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Quotation number</mat-label><input matInput [(ngModel)]="commercial.quotationNumber" placeholder="Generated after selecting an RFQ item" /><mat-hint>Generated automatically; editable before creation</mat-hint></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Payment terms</mat-label><input matInput [(ngModel)]="commercial.paymentTerms" /></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Delivery terms</mat-label><input matInput [(ngModel)]="commercial.deliveryTerms" /></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Delivery time</mat-label><input matInput [(ngModel)]="commercial.deliveryTime" /></mat-form-field>
@@ -21,12 +21,12 @@
     </section>
 
     <section class="surface section-card">
-      <header><span class="step">02</span><div><h3>Material & weight</h3><p>Load reusable material data, then calculate weight in SI units.</p></div><button mat-stroked-button (click)="loadMaterial()">Load material</button></header>
+      <header><span class="step">02</span><div><h3>Material & weight</h3><p>Load reusable material data, then calculate weight in SI units.</p></div><button mat-stroked-button (click)="refreshMetalData()">Refresh density & rate</button><button mat-stroked-button (click)="loadMaterial()">Load material</button></header>
       <div class="material-strip">
         <mat-form-field appearance="outline"><mat-label>Material number</mat-label><input matInput [(ngModel)]="engineering.materialNo" /></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Metal</mat-label><mat-select [(ngModel)]="engineering.metalId" (selectionChange)="onMetal()">@for (metal of metals(); track metal.id) { <mat-option [value]="metal.id">{{ metal.name }} {{ metal.grade || '' }}</mat-option> }</mat-select></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Metal</mat-label><mat-select [(ngModel)]="engineering.metalId" (selectionChange)="onMetal()"><mat-option [value]="0">{{ detectedMetal() }} (from RFQ)</mat-option>@for (metal of metals(); track metal.id) { <mat-option [value]="metal.id">{{ metal.name }} {{ metal.grade || '' }}</mat-option> }</mat-select><mat-hint>Latest master value is selected automatically; you can override it</mat-hint></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Density kg/m³</mat-label><input matInput type="number" [(ngModel)]="engineering.densityKgM3" /></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Rate / kg</mat-label><input matInput type="number" [(ngModel)]="engineering.materialRatePerKg" (change)="calculateMaterialCost()" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Current rate / kg</mat-label><input matInput type="number" [(ngModel)]="engineering.materialRatePerKg" (change)="calculateMaterialCost()" /><mat-hint>Fetched from the metal master; editable for today's quote</mat-hint></mat-form-field>
       </div>
 
       <div class="shape-picker">

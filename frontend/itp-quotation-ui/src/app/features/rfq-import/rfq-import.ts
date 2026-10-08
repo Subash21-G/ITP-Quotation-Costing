@@ -119,6 +119,7 @@ export class RfqImport {
     this.api.confirmRfqImport({
       rfqNumber: this.review.rfqNumber,
       customerId: Number(this.review.customerId),
+      customerName: this.extraction()?.customerName ?? null,
       rfqDate: this.review.rfqDate || null,
       status: this.review.status,
       items: this.review.items.map((item) => ({
@@ -186,6 +187,14 @@ export class RfqImport {
 
   private problemDetail(error: HttpErrorResponse, fallback: string): string {
     const detail = error.error?.detail;
-    return typeof detail === 'string' && detail ? detail : fallback;
+    if (typeof detail === 'string' && detail) return detail;
+    const errors = error.error?.errors;
+    if (errors && typeof errors === 'object') {
+      const messages = Object.values(errors)
+        .flatMap((value) => (Array.isArray(value) ? value : []))
+        .filter((value): value is string => typeof value === 'string' && !!value);
+      if (messages.length) return messages.join(' ');
+    }
+    return fallback;
   }
 }

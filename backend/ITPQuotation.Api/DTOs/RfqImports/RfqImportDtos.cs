@@ -29,8 +29,10 @@ public sealed class RfqImportConfirmationRequest
     [Required, StringLength(100)]
     public string RfqNumber { get; set; } = string.Empty;
 
-    [Range(1, int.MaxValue)]
     public int CustomerId { get; set; }
+
+    [StringLength(200)]
+    public string? CustomerName { get; set; }
 
     public DateTime? RfqDate { get; set; }
 

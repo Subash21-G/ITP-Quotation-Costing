@@ -83,6 +83,41 @@ public sealed class RfqImportApiTests(TestApiFactory factory) : IClassFixture<Te
         Assert.Equal("Dia 50 x 500 mm", item.Dimensions);
     }
 
+    [Fact]
+    public async Task Confirm_DetectedCustomerWithoutMatch_CreatesCustomerAndRfq()
+    {
+        var customerName = $"WEG Imported {Guid.NewGuid():N}";
+        var rfqNumber = $"WEG-{Guid.NewGuid():N}";
+
+        var response = await _client.PostAsJsonAsync("/api/rfq-imports/confirm", new
+        {
+            rfqNumber,
+            customerId = 0,
+            customerName,
+            rfqDate = "2026-09-28",
+            status = "Draft",
+            items = new[]
+            {
+                new
+                {
+                    lineItem = "00010",
+                    materialNo = "10174478",
+                    description = "Bearing protection ring",
+                    drawingNo = "SWD 10000095239; SWP 10000095238",
+                    grade = "CARBON STEEL SAE 1010/20",
+                    dimensions = "264X12",
+                    quantity = 1m,
+                    unit = "UN",
+                    deliveryDate = "2027-06-09"
+                }
+            }
+        });
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var customers = await _client.GetFromJsonAsync<List<CustomerSummary>>("/api/customers");
+        Assert.Contains(customers!, customer => customer.CustomerName == customerName);
+    }
+
     private static MultipartFormDataContent CreatePdfForm(string fileName)
     {
         var form = new MultipartFormDataContent();
@@ -93,6 +128,7 @@ public sealed class RfqImportApiTests(TestApiFactory factory) : IClassFixture<Te
     }
 
     private sealed record IdResponse(int Id);
+    private sealed record CustomerSummary(int Id, string CustomerName);
     private sealed record RfqSummary(int Id);
     private sealed record RfqItemSummary(
         int Id,

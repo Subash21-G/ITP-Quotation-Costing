@@ -63,6 +63,7 @@
         <mat-form-field appearance="outline">
           <mat-label>Match customer</mat-label>
           <mat-select [(ngModel)]="review.customerId" (ngModelChange)="reviewed = false">
+            <mat-option [value]="0">Create from detected customer</mat-option>
             @for (customer of customers(); track customer.id) {
               <mat-option [value]="customer.id">{{ customer.customerName }}</mat-option>
             }
