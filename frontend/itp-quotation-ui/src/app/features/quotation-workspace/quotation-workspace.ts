@@ -184,6 +184,7 @@ export class QuotationWorkspace {
     this.engineering.materialNo = item.materialNo;
     this.engineering.shortDescription = this.conciseDescription(item.description);
     this.engineering.quantity = item.quantity;
+    this.applyDetectedGeometry(item);
     this.detectedMetal.set(item.grade?.trim() ?? 'Material not detected');
     this.generateQuotationNumber(item);
     this.refreshMetalData(item);
@@ -461,6 +462,45 @@ export class QuotationWorkspace {
     if (!value?.trim()) return '';
     const concise = value.split(' - ', 1)[0].trim();
     return concise.slice(0, 500);
+  }
+
+  private applyDetectedGeometry(item: RfqItem): void {
+    const description = `${item.description ?? ''} ${item.dimensions ?? ''}`.toLowerCase();
+    if (/\b(square\s*tube|box\s*section)\b/.test(description)) {
+      this.engineering.shape = 'SquareTube';
+    } else if (/\b(rectangular\s*tube|rect\.?\s*tube)\b/.test(description)) {
+      this.engineering.shape = 'RectangularTube';
+    } else if (/\b(ring|pipe|round\s*tube|hollow\s*round)\b/.test(description)) {
+      this.engineering.shape = 'RoundTube';
+    } else if (/\b(round\s*bar|rod|shaft)\b/.test(description)) {
+      this.engineering.shape = 'RoundBar';
+    } else if (/\b(square\s*bar)\b/.test(description)) {
+      this.engineering.shape = 'SquareBar';
+    } else if (/\b(hex|hexagonal)\b/.test(description)) {
+      this.engineering.shape = 'HexBar';
+    } else if (/\b(plate|flat|sheet)\b/.test(description)) {
+      this.engineering.shape = 'Plate';
+    }
+
+    const dimensions = (item.dimensions ?? '').match(/\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+    if (this.engineering.shape === 'RoundTube' && dimensions.length >= 2) {
+      this.engineering.outerDiameter = dimensions[0];
+      this.engineering.innerDiameter = dimensions[1];
+      if (dimensions.length >= 3) this.engineering.length = dimensions[2];
+    } else if (this.engineering.shape === 'RoundBar' && dimensions.length >= 1) {
+      this.engineering.diameter = dimensions[0];
+      if (dimensions.length >= 2) this.engineering.length = dimensions[1];
+    } else if (this.engineering.shape === 'SquareBar' && dimensions.length >= 1) {
+      this.engineering.side = dimensions[0];
+      if (dimensions.length >= 2) this.engineering.length = dimensions[1];
+    } else if (this.engineering.shape === 'HexBar' && dimensions.length >= 1) {
+      this.engineering.acrossFlats = dimensions[0];
+      if (dimensions.length >= 2) this.engineering.length = dimensions[1];
+    } else if (dimensions.length >= 2) {
+      this.engineering.length = dimensions[0];
+      this.engineering.width = dimensions[1];
+      if (dimensions.length >= 3) this.engineering.thickness = dimensions[2];
+    }
   }
 
   private categoryFor(process: string, type: string): string {

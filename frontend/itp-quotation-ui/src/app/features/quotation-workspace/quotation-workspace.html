@@ -21,7 +21,7 @@
     </section>
 
     <section class="surface section-card">
-      <header><span class="step">02</span><div><h3>Material & weight</h3><p>Load reusable material data, then calculate weight in SI units.</p></div><button mat-stroked-button (click)="refreshMetalData()">Refresh density & rate</button><button mat-stroked-button (click)="loadMaterial()">Load material</button></header>
+      <header><span class="step">02</span><div><h3>Material & weight</h3><p>Shape and dimensions are suggested from the RFQ description and remain editable.</p></div><button mat-stroked-button (click)="refreshMetalData()">Refresh density & rate</button><button mat-stroked-button (click)="loadMaterial()">Load material</button></header>
       <div class="material-strip">
         <mat-form-field appearance="outline"><mat-label>Material number</mat-label><input matInput [(ngModel)]="engineering.materialNo" /></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Short description</mat-label><input matInput maxlength="500" [(ngModel)]="engineering.shortDescription" /><mat-hint>From RFQ or material master; editable</mat-hint></mat-form-field>
