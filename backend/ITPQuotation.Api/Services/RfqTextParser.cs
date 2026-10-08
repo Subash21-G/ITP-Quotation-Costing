@@ -78,6 +78,7 @@ public sealed partial class RfqTextParser
                 ? string.Join(" ", lines[detailStart..end]
                     .Where(line => !WegPageFurniturePattern().IsMatch(line)))
                 : string.Empty;
+            detail = DeduplicateRepeatedText(detail);
             var description = string.Join(" - ", new[] { shortDescription, detail }
                 .Where(value => !string.IsNullOrWhiteSpace(value)))
                 .Trim();
@@ -104,7 +105,8 @@ public sealed partial class RfqTextParser
                     ?? MatchValue(detail, WegInlineGradePattern())
                     ?? MatchValue(block, WegGradePattern())
                     ?? MatchValue(block, WegInlineGradePattern()),
-                MatchValue(detail, WegDetailedDimensionsPattern())
+                ParseLabeledDimensions(detail)
+                    ?? MatchValue(detail, WegDetailedDimensionsPattern())
                     ?? MatchValue(summary, WegDimensionsPattern())));
         }
 
@@ -115,6 +117,29 @@ public sealed partial class RfqTextParser
     {
         var index = value.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
         return index < 0 ? value.Length : index;
+    }
+
+    private static string DeduplicateRepeatedText(string value)
+    {
+        var cleaned = Regex.Replace(value, @"\s+", " ").Trim();
+        if (cleaned.Length < 120) return cleaned;
+
+        var prefixLength = Math.Min(80, cleaned.Length / 3);
+        var prefix = cleaned[..prefixLength];
+        var repeatAt = cleaned.IndexOf(prefix, prefixLength, StringComparison.OrdinalIgnoreCase);
+        return repeatAt < 0 ? cleaned : cleaned[..repeatAt].Trim();
+    }
+
+    private static string? ParseLabeledDimensions(string detail)
+    {
+        var width = MatchValue(detail, WegWidthPattern());
+        var length = MatchValue(detail, WegLengthPattern());
+        var thickness = MatchValue(detail, WegThicknessPattern());
+        if (width is null || length is null) return null;
+
+        return thickness is null
+            ? $"{width}mmX{length}mm"
+            : $"{width}mmX{length}mmX{thickness}mm";
     }
 
     private static IReadOnlyList<RfqImportItemSuggestion> ParseItems(string[] lines)
@@ -288,6 +313,15 @@ public sealed partial class RfqTextParser
 
     [GeneratedRegex(@"\b(?<value>\d+(?:\.\d+)?\s*mm\s*[xX]\s*\d+(?:\.\d+)?\s*mm(?:\s*[xX]\s*\d+(?:\.\d+)?\s*mm)?)\b", RegexOptions.IgnoreCase)]
     private static partial Regex WegDetailedDimensionsPattern();
+
+    [GeneratedRegex(@"(?:ENTRY\s+PLATE\s+)?WIDTH\s*:\s*(?<value>\d+(?:\.\d+)?)\s*mm", RegexOptions.IgnoreCase)]
+    private static partial Regex WegWidthPattern();
+
+    [GeneratedRegex(@"(?:ENTRY\s+PLATE\s+)?LENGTH\s*:\s*(?<value>\d+(?:\.\d+)?)\s*mm", RegexOptions.IgnoreCase)]
+    private static partial Regex WegLengthPattern();
+
+    [GeneratedRegex(@"(?:ENTRY\s+PLATE\s+)?THICKNESS\s*:\s*(?<value>\d+(?:\.\d+)?)\s*mm", RegexOptions.IgnoreCase)]
+    private static partial Regex WegThicknessPattern();
 
     [GeneratedRegex(@"(?:RING|DEVICE|ALIGNMENT|BEARING|TEMPLATE|MATERIAL|PART|CABLE)\b", RegexOptions.IgnoreCase)]
     private static partial Regex WegDetailPattern();
