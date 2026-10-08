@@ -96,6 +96,7 @@ export class QuotationWorkspace {
   };
   protected engineering = {
     materialNo: '',
+    shortDescription: '',
     metalId: 0,
     shape: 'Plate',
     unit: 'mm',
@@ -181,6 +182,7 @@ export class QuotationWorkspace {
     const item = this.items().find((row) => row.id === this.commercial.rfqItemId);
     if (!item) return;
     this.engineering.materialNo = item.materialNo;
+    this.engineering.shortDescription = this.conciseDescription(item.description);
     this.engineering.quantity = item.quantity;
     this.detectedMetal.set(item.grade?.trim() ?? 'Material not detected');
     this.generateQuotationNumber(item);
@@ -212,6 +214,8 @@ export class QuotationWorkspace {
     this.api.material(this.engineering.materialNo).subscribe({
       next: (details) => {
         this.master.set(details);
+        this.engineering.shortDescription =
+          details.material.shortDescription?.trim() || this.engineering.shortDescription;
         this.engineering.metalId = details.material.metalMaterialId ?? 0;
         this.engineering.densityKgM3 =
           details.material.metalMaterial?.densityKgM3 ?? this.engineering.densityKgM3;
@@ -373,6 +377,7 @@ export class QuotationWorkspace {
         items: [
           {
             rfqItemId: this.commercial.rfqItemId,
+            description: this.engineering.shortDescription.trim() || null,
             materialRatePerKg: Number(this.engineering.materialRatePerKg),
             densityKgM3: Number(this.engineering.densityKgM3),
             rawMaterialShape: this.engineering.shape,
@@ -450,6 +455,12 @@ export class QuotationWorkspace {
 
   private normalizeMaterialText(value: string): string {
     return value.toLowerCase().replace(/[^a-z0-9]/g, '');
+  }
+
+  private conciseDescription(value?: string): string {
+    if (!value?.trim()) return '';
+    const concise = value.split(' - ', 1)[0].trim();
+    return concise.slice(0, 500);
   }
 
   private categoryFor(process: string, type: string): string {

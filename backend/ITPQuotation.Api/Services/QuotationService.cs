@@ -256,7 +256,7 @@ public sealed class QuotationService(
             {
                 RfqItemId = rfqItem.Id,
                 MaterialNo = rfqItem.MaterialNo,
-                Description = rfqItem.Description,
+                Description = Clean(request.Description) ?? ShortDescription(rfqItem.Description),
                 DrawingNo = rfqItem.DrawingNo,
                 Quantity = costSheet.Quantity,
                 MaterialRatePerKg =
@@ -415,6 +415,12 @@ public sealed class QuotationService(
             UnitPrice = item.UnitPrice,
             TotalPrice = item.TotalPrice
         };
+
+    private static string? ShortDescription(string? value)
+    {
+        var cleaned = Clean(value);
+        return cleaned is null || cleaned.Length <= 500 ? cleaned : cleaned[..500];
+    }
 
     private IQueryable<Quotation> Query(bool asTracking)
     {

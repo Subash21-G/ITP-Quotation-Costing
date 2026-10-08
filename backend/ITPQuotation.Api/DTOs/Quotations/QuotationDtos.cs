@@ -89,6 +89,9 @@ public sealed record QuotationItemWriteRequest : IValidatableObject
     [Range(1, int.MaxValue)]
     public int RfqItemId { get; set; }
 
+    [StringLength(500)]
+    public string? Description { get; set; }
+
     [Range(typeof(decimal), "0", "999999999999.999999")]
     public decimal? MaterialRatePerKg { get; set; }
 
