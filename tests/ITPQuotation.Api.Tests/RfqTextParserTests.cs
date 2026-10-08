@@ -94,4 +94,24 @@ public sealed class RfqTextParserTests
         Assert.Equal(new DateTime(2027, 8, 4), result.Items[1].DeliveryDate);
         Assert.Empty(result.Warnings);
     }
+
+    [Fact]
+    public void Parse_WegCableEntryPlate_ExtractsInlineCastIronGrade()
+    {
+        var result = _parser.Parse(
+            "plate.pdf",
+            """
+            Supply Quotation No. 6003213177/ WEG Print Date: 08.10.2026 Page: 1/1
+            To: WEG INDUSTRIES (INDIA) PVT. LTD. Supplier Code: 6200
+            00010 19220392 CABLE ENTRY PLATE FC-200 446X861mm
+            SWD 10014319518 1.00/UN 14.10.2026
+            CABLE ENTRY PLATE CAST IRON FC-200 COMPONENT TYPE: SPECIAL; ENTRY PLATE THICKNESS : 12mm; ENTRY PLATE WIDTH : 446mm; ENTRY PLATE LENGTH : 861mm
+            Additional Information:
+            """,
+            1);
+
+        var item = Assert.Single(result.Items);
+        Assert.Equal("CAST IRON FC-200", item.Grade);
+        Assert.Equal("446X861mm", item.Dimensions);
+    }
 }

@@ -100,7 +100,10 @@ public sealed partial class RfqTextParser
                 quantity,
                 unit,
                 ParseDate(dateMatch),
-                MatchValue(detail, WegGradePattern()) ?? MatchValue(block, WegGradePattern()),
+                MatchValue(detail, WegGradePattern())
+                    ?? MatchValue(detail, WegInlineGradePattern())
+                    ?? MatchValue(block, WegGradePattern())
+                    ?? MatchValue(block, WegInlineGradePattern()),
                 MatchValue(detail, WegDetailedDimensionsPattern())
                     ?? MatchValue(summary, WegDimensionsPattern())));
         }
@@ -277,13 +280,16 @@ public sealed partial class RfqTextParser
     [GeneratedRegex(@"(?:MATERIAL|MATERIAL\s+GRADE)\s*:\s*(?<value>[^;\r\n]+)", RegexOptions.IgnoreCase)]
     private static partial Regex WegGradePattern();
 
+    [GeneratedRegex(@"\b(?<value>(?:CARBON\s+STEEL|CAST\s+IRON|STAINLESS\s+STEEL|ALUMINIUM|ALUMINUM|BRASS|COPPER)(?:\s+SAE)?\s+[A-Z0-9][A-Z0-9./-]*)\b", RegexOptions.IgnoreCase)]
+    private static partial Regex WegInlineGradePattern();
+
     [GeneratedRegex(@"\b(?<value>\d+(?:\.\d+)?\s*[xX]\s*\d+(?:\.\d+)?(?:\s*[xX]\s*\d+(?:\.\d+)?)?\s*(?:mm)?)\b", RegexOptions.IgnoreCase)]
     private static partial Regex WegDimensionsPattern();
 
     [GeneratedRegex(@"\b(?<value>\d+(?:\.\d+)?\s*mm\s*[xX]\s*\d+(?:\.\d+)?\s*mm(?:\s*[xX]\s*\d+(?:\.\d+)?\s*mm)?)\b", RegexOptions.IgnoreCase)]
     private static partial Regex WegDetailedDimensionsPattern();
 
-    [GeneratedRegex(@"(?:RING|DEVICE|ALIGNMENT|BEARING|TEMPLATE|MATERIAL|PART)\b", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"(?:RING|DEVICE|ALIGNMENT|BEARING|TEMPLATE|MATERIAL|PART|CABLE)\b", RegexOptions.IgnoreCase)]
     private static partial Regex WegDetailPattern();
 
     [GeneratedRegex(@"^(?:WEG\s+Ind|PLOT\s+NO|Post\s+box|CNPJ|Supply\s+Quotation|Print\s+Date|Page\s*:|To\s*:|Att\s*:|Supplier\s+Code|E-mail|Fax\s*:|Telephone\s*:|Note\s*:|Item\s+Material|Additional\s+Information)", RegexOptions.IgnoreCase)]
