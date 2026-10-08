@@ -106,6 +106,33 @@ public sealed class QuotationApiTests(TestApiFactory factory)
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    [Fact]
+    public async Task QuotationPdf_ReturnsDownloadablePdfForCurrentAndStoredRevision()
+    {
+        var seed = await CreateCostedRfqItemAsync();
+        var create = await _client.PostAsJsonAsync(
+            "/api/quotations",
+            CreateQuotationRequest(seed));
+        create.EnsureSuccessStatusCode();
+        var quotation = await create.Content.ReadFromJsonAsync<QuotationApiResponse>();
+
+        var currentPdf = await _client.GetAsync($"/api/quotations/{quotation!.Id}/pdf");
+        var revisionPdf = await _client.GetAsync(
+            $"/api/quotations/{quotation.Id}/revisions/0/pdf");
+
+        foreach (var response in new[] { currentPdf, revisionPdf })
+        {
+            Assert.True(
+                response.IsSuccessStatusCode,
+                await response.Content.ReadAsStringAsync());
+            Assert.Equal("application/pdf", response.Content.Headers.ContentType?.MediaType);
+            Assert.StartsWith("attachment", response.Content.Headers.ContentDisposition?.DispositionType);
+            var content = await response.Content.ReadAsByteArrayAsync();
+            Assert.True(content.Length > 100);
+            Assert.Equal("%PDF-", System.Text.Encoding.ASCII.GetString(content, 0, 5));
+        }
+    }
+
     private async Task<CostedSeed> CreateCostedRfqItemAsync()
     {
         var seed = await CreateRfqItemAsync();

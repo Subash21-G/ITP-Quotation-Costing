@@ -3,6 +3,8 @@
 **/obj/
 **/TestResults/
 **/coverage/
+/output/
+/frontend/package-lock.json
 *.trx
 *.coverage
 *.coveragexml

@@ -130,8 +130,18 @@ export class ApiService {
     return this.http.post<CostSheet>(this.baseUrl + '/cost-sheets', payload);
   }
 
+  exportQuotation(id: number, customerPoNumber: string): Observable<{ purchaseOrderId: number; poNumber: string; revision: number; alreadyImported: boolean }> {
+    return this.http.post<{ purchaseOrderId: number; poNumber: string; revision: number; alreadyImported: boolean }>(
+      this.baseUrl + '/quotations/' + id + '/potracker', { customerPoNumber });
+  }
+
   quotations(): Observable<Quotation[]> {
     return this.http.get<Quotation[]>(this.baseUrl + '/quotations');
+  }
+
+  quotationPdfUrl(id: number, revision?: number): string {
+    const suffix = revision === undefined ? '/pdf' : '/revisions/' + revision + '/pdf';
+    return this.baseUrl + '/quotations/' + id + suffix;
   }
 
   createQuotation(payload: object): Observable<Quotation> {

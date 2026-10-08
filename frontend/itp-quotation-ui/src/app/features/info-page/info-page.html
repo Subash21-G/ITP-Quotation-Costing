@@ -7,14 +7,24 @@
     </div>
   </div>
 
-  <section class="surface empty-state">
-    <div class="monogram">{{ kind() === 'reports' ? 'R' : 'S' }}</div>
-    <h3>{{ kind() === 'reports' ? 'Reporting foundation is ready' : 'Configuration area reserved' }}</h3>
-    <p>
-      {{ kind() === 'reports'
-        ? 'The quotation, revision, and cost-sheet data is available for the reporting phase.'
-        : 'Core master data is available from the Masters navigation while settings are developed.' }}
-    </p>
-    <button mat-flat-button routerLink="/dashboard">Return to dashboard</button>
-  </section>
+  @if (error()) { <div class="error-banner">{{ error() }}</div> }
+  @if (loading()) {
+    <section class="surface empty-state"><h3>Loading live workspace data…</h3></section>
+  } @else if (kind() === 'reports') {
+    <div class="stats-grid">
+      <article class="stat surface"><span>Total quoted value</span><strong>{{ totalQuotedValue() | currency:'INR':'symbol':'1.0-0' }}</strong><small>{{ quotations().length }} quotations</small></article>
+      <article class="stat surface"><span>Accepted</span><strong>{{ statusCount('Accepted') }}</strong><small>Accepted quotations</small></article>
+      <article class="stat surface"><span>Open RFQs</span><strong>{{ rfqs().length }}</strong><small>Live requests</small></article>
+      <article class="stat surface"><span>Customers</span><strong>{{ customers().length }}</strong><small>Configured customers</small></article>
+    </div>
+    <section class="surface empty-state"><h3>Quotation performance</h3><p>Live figures are calculated from quotations, RFQs, customers, and material masters.</p><button mat-flat-button routerLink="/quotations">Open quotations</button></section>
+  } @else {
+    <div class="stats-grid">
+      <article class="stat surface"><span>Customers</span><strong>{{ customers().length }}</strong><small>Available to estimators</small></article>
+      <article class="stat surface"><span>Materials</span><strong>{{ materials().length }}</strong><small>Active master records</small></article>
+      <article class="stat surface"><span>RFQs</span><strong>{{ rfqs().length }}</strong><small>Stored requests</small></article>
+      <article class="stat surface"><span>Quotations</span><strong>{{ quotations().length }}</strong><small>Commercial records</small></article>
+    </div>
+    <section class="surface empty-state"><h3>Workspace configuration</h3><p>Live master and transaction counts are shown here. Manage detailed records from the Masters and RFQs sections.</p><button mat-flat-button routerLink="/masters/materials">Manage masters</button></section>
+  }
 </div>

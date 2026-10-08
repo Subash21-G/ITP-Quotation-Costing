@@ -44,6 +44,7 @@ Already completed:
 - README documentation
 - Build currently succeeds with 0 errors and 0 warnings
 - Existing EF model has no pending changes
+- Quotation PDF generation with current and historical revision downloads
 
 Do not recreate or remove these features.
 

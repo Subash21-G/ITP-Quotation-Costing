@@ -4,6 +4,7 @@ using ITPQuotation.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ITPQuotation.Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261006101544_AddAuthentication")]
+    partial class AddAuthentication
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -431,16 +434,6 @@ namespace ITPQuotation.Api.Migrations
                     b.Property<string>("PaymentTerms")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
-
-                    b.Property<int?>("PoTrackerExportedRevision")
-                        .HasColumnType("int");
-
-                    b.Property<string>("PoTrackerPoNumber")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<int?>("PoTrackerPurchaseOrderId")
-                        .HasColumnType("int");
 
                     b.Property<DateTime>("QuotationDate")
                         .HasColumnType("datetime2");

@@ -1,4 +1,8 @@
-param([string]$BaseUrl = 'http://localhost:5263')
+param(
+    [string]$BaseUrl = 'http://localhost:5263',
+    [string]$Username = $(if ($env:ITP_TEST_USERNAME) { $env:ITP_TEST_USERNAME } else { 'phase0-admin' }),
+    [string]$Password = $(if ($env:ITP_TEST_PASSWORD) { $env:ITP_TEST_PASSWORD } else { 'Phase0-Test-Password-2026!' })
+)
 
 $ErrorActionPreference = 'Stop'
 $token = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
@@ -13,6 +17,14 @@ $routeIds = [System.Collections.Generic.List[int]]::new()
 $customerId = $null
 $rfqId = $null
 $passed = 0
+$headers = @{}
+
+function Connect-Api {
+    $response = Invoke-WebRequest -Uri ($BaseUrl + '/api/auth/login') -Method Post -ContentType 'application/json' -Body (@{ username = $Username; password = $Password } | ConvertTo-Json -Compress) -UseBasicParsing -TimeoutSec 15
+    $headers.Authorization = 'Bearer ' + (($response.Content | ConvertFrom-Json).accessToken)
+}
+
+Connect-Api
 
 function Invoke-Api([string]$Method, [string]$Path, $Body = $null) {
     $parameters = @{
@@ -25,6 +37,7 @@ function Invoke-Api([string]$Method, [string]$Path, $Body = $null) {
         $parameters.ContentType = 'application/json'
         $parameters.Body = $Body | ConvertTo-Json -Depth 12 -Compress
     }
+    $parameters.Headers = $headers
 
     try {
         $response = Invoke-WebRequest @parameters

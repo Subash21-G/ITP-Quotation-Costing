@@ -247,6 +247,10 @@ public record QuotationSnapshot
 
 public sealed record QuotationResponse : QuotationSnapshot
 {
+    public int? PoTrackerPurchaseOrderId { get; init; }
+    public string? PoTrackerPoNumber { get; init; }
+    public int? PoTrackerExportedRevision { get; init; }
+
     public int Id { get; init; }
     public DateTime CreatedDate { get; init; }
     public DateTime UpdatedDate { get; init; }

@@ -59,6 +59,7 @@ The relationship migration requires existing RFQs to reference valid customers a
 | Cost sheet by RFQ item | GET `/api/cost-sheets/by-rfq-item/{rfqItemId}` | - |
 | Quotations | GET, POST `/api/quotations` | GET, PUT `/api/quotations/{id}` |
 | Quotation revisions | GET `/api/quotations/{id}/revisions` | GET `/api/quotations/{id}/revisions/{revision}` |
+| Quotation PDF | GET `/api/quotations/{id}/pdf` | GET `/api/quotations/{id}/revisions/{revision}/pdf` |
 
 Filter RFQs with `?customerId=1`. Customer PUT retains the existing requirement that the body ID matches the URL ID. RFQ and item writes use request DTOs; IDs and creation timestamps are server controlled. Item IDs are scoped to their parent RFQ.
 
@@ -84,6 +85,10 @@ Each RFQ item can have one editable cost sheet. Cost lines are ordered by sequen
 
 Creating a quotation produces immutable revision 0. Each PUT is an explicit revision: it increments the revision number, refreshes current item snapshots from the selected RFQ items and cost sheets, and preserves every older revision unchanged. Snapshots include commercial terms, material rate, density, raw dimensions, weights, process/vendor rates, the complete costing breakdown, overhead, profit, and offered unit/total prices. A quoted RFQ cannot be deleted.
 
+Quotation PDFs show the customer, RFQ, material items, offered prices, commercial terms, and revision. The current PDF uses the current quotation snapshot; the revision PDF endpoint always uses the immutable stored revision snapshot.
+
+PDF generation uses QuestPDF. Development uses its Evaluation tier through `QuestPdf:License`; set this configuration to the license tier that applies to the deployed business before production use.
+
 Quotation statuses are `Draft`, `Ready`, `Sent`, `UnderReview`, `Negotiation`, `Accepted`, `Rejected`, `Lost`, `Expired`, and `POReceived`. Filter quotations with `?customerId=` or `?status=`.
 
 ## Verification
@@ -103,6 +108,6 @@ The xUnit project uses an isolated EF Core in-memory database and an in-process 
 Customer, RFQ, Mastersheet management, RFQ PDF extraction with confirmed
 Read & Fix, engineering calculators, process costing, persistent cost sheets,
 quotations, immutable quotation revisions, and the Angular costing workspace.
-Login, OCR, quotation PDF generation, reports, settings, and production
+Login, OCR, reports, settings, and production
 deployment configuration are not included yet. The PDF path model property is
 reserved and is not writable through the RFQ request DTO.

@@ -172,6 +172,9 @@ export interface CostSheet {
 }
 
 export interface Quotation {
+  poTrackerPurchaseOrderId?: number;
+  poTrackerPoNumber?: string;
+  poTrackerExportedRevision?: number;
   id: number;
   quotationNumber: string;
   customerId: number;

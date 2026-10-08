@@ -342,6 +342,9 @@ public sealed class QuotationService(
         return new QuotationResponse
         {
             Id = quotation.Id,
+            PoTrackerPurchaseOrderId = quotation.PoTrackerPurchaseOrderId,
+            PoTrackerPoNumber = quotation.PoTrackerPoNumber,
+            PoTrackerExportedRevision = quotation.PoTrackerExportedRevision,
             QuotationNumber = snapshot.QuotationNumber,
             CustomerId = snapshot.CustomerId,
             CustomerName = snapshot.CustomerName,

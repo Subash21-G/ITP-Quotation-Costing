@@ -1,11 +1,16 @@
 using ITPQuotation.Api.Data;
 using ITPQuotation.Api.Services;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using System.Security.Claims;
+using System.Text.Encodings.Web;
 
 namespace ITPQuotation.Api.Tests;
 
@@ -18,6 +23,8 @@ public sealed class TestApiFactory : WebApplicationFactory<ApiAssemblyMarker>
         builder.UseEnvironment("Development");
         builder.ConfigureServices(services =>
         {
+            services.AddAuthentication("Test")
+                .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", _ => { });
             services.RemoveAll<IDbContextOptionsConfiguration<ApplicationDbContext>>();
             services.RemoveAll<ApplicationDbContext>();
             services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
@@ -26,6 +33,17 @@ public sealed class TestApiFactory : WebApplicationFactory<ApiAssemblyMarker>
             services.RemoveAll<IRfqPdfTextExtractor>();
             services.AddSingleton<IRfqPdfTextExtractor, TestPdfTextExtractor>();
         });
+    }
+
+    private sealed class TestAuthHandler(
+        IOptionsMonitor<AuthenticationSchemeOptions> options,
+        ILoggerFactory logger,
+        UrlEncoder encoder) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
+    {
+        protected override Task<AuthenticateResult> HandleAuthenticateAsync() =>
+            Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(
+                new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.Name, "Test Admin"), new Claim(ClaimTypes.Role, "Admin")], Scheme.Name)),
+                Scheme.Name)));
     }
 
     private sealed class TestPdfTextExtractor : IRfqPdfTextExtractor

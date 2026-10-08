@@ -47,7 +47,7 @@ export class App {
         const title =
           [...this.navItems, ...this.masterItems].find((item) =>
             event.urlAfterRedirects.startsWith(item.route),
-          )?.label ?? (event.urlAfterRedirects.startsWith('/reports') ? 'Reports' : 'Settings');
+          )?.label ?? (event.urlAfterRedirects.startsWith('/reports') ? 'Reports' : '');
         this.pageTitle.set(title);
         this.mobileOpen.set(false);
       });

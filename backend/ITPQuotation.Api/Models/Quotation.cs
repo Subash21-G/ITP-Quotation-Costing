@@ -3,6 +3,9 @@ namespace ITPQuotation.Api.Models;
 public class Quotation
 {
     public int Id { get; set; }
+    public int? PoTrackerPurchaseOrderId { get; set; }
+    public string? PoTrackerPoNumber { get; set; }
+    public int? PoTrackerExportedRevision { get; set; }
     public string QuotationNumber { get; set; } = string.Empty;
     public int CustomerId { get; set; }
     public int RfqId { get; set; }

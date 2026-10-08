@@ -59,11 +59,6 @@ export const routes: Routes = [
     data: { kind: 'reports' },
     loadComponent: () => import('./features/info-page/info-page').then((m) => m.InfoPage),
   },
-  {
-    path: 'settings',
-    data: { kind: 'settings' },
-    loadComponent: () => import('./features/info-page/info-page').then((m) => m.InfoPage),
-  },
   { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
   { path: '**', redirectTo: 'dashboard' },
 ];
