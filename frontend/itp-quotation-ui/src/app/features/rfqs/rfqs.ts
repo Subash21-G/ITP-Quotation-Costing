@@ -1,3 +1,4 @@
+import { AuthService } from '../../core/auth.service';
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
@@ -14,6 +15,7 @@ import { ApiService } from '../../core/api.service';
   styleUrl: '../shared-list.scss',
 })
 export class Rfqs {
+  protected readonly auth = inject(AuthService);
   private readonly api = inject(ApiService);
   protected readonly rows = signal<Rfq[]>([]);
   protected readonly customers = signal<Map<number, Customer>>(new Map());

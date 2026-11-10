@@ -1,5 +1,6 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import { AuthService } from './core/auth.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
@@ -24,6 +25,7 @@ import { filter } from 'rxjs';
   templateUrl: './app.html',
 })
 export class App {
+  protected readonly auth = inject(AuthService);
   protected readonly pageTitle = signal('Executive overview');
   protected readonly mobileOpen = signal(false);
   protected readonly navItems = [

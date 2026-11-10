@@ -148,6 +148,10 @@ export class ApiService {
     return this.baseUrl + '/quotations/' + id + suffix;
   }
 
+  quotationPdf(id: number, revision?: number): Observable<Blob> {
+    return this.http.get(this.quotationPdfUrl(id, revision), { responseType: 'blob' });
+  }
+
   createQuotation(payload: object): Observable<Quotation> {
     return this.http.post<Quotation>(this.baseUrl + '/quotations', payload);
   }

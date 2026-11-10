@@ -687,6 +687,10 @@ namespace ITPQuotation.Api.Migrations
                     b.Property<int>("RfqId")
                         .HasColumnType("int");
 
+                    b.Property<decimal?>("TransportCost")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("Unit")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");

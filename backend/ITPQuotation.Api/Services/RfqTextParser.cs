@@ -107,7 +107,8 @@ public sealed partial class RfqTextParser
                     ?? MatchValue(block, WegInlineGradePattern()),
                 ParseLabeledDimensions(detail)
                     ?? MatchValue(detail, WegDetailedDimensionsPattern())
-                    ?? MatchValue(summary, WegDimensionsPattern())));
+                    ?? MatchValue(summary, WegDimensionsPattern()),
+                ParseTransportCost(block)));
         }
 
         return items;
@@ -176,9 +177,10 @@ public sealed partial class RfqTextParser
             var deliveryDate = MatchValue(line, DeliveryDatePattern());
             var grade = MatchValue(line, GradePattern());
             var dimensions = MatchValue(line, DimensionsPattern());
+            var transportCost = ParseTransportCost(line);
 
             if (lineItem is null && description is null && drawing is null && quantity is null
-                && deliveryDate is null && grade is null && dimensions is null)
+                && deliveryDate is null && grade is null && dimensions is null && transportCost is null)
             {
                 continue;
             }
@@ -189,6 +191,7 @@ public sealed partial class RfqTextParser
             current.DrawingNo ??= drawing;
             current.Grade ??= grade;
             current.Dimensions ??= dimensions;
+            current.TransportCost ??= transportCost;
             if (deliveryDate is not null) current.DeliveryDate ??= ParseDate(deliveryDate);
             if (quantity is not null && current.Quantity is null) ParseQuantity(quantity, current);
         }
@@ -238,6 +241,15 @@ public sealed partial class RfqTextParser
         return match.Success ? match.Groups["value"].Value.Trim() : null;
     }
 
+    private static decimal? ParseTransportCost(string text)
+    {
+        var match = TransportCostPattern().Match(text);
+        if (!match.Success) return null;
+        return decimal.TryParse(match.Groups["value"].Value.Replace(",", ""),
+            NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var amount)
+            ? amount : null;
+    }
+
     private static DateTime? ParseDate(string? value)
     {
         if (string.IsNullOrWhiteSpace(value)) return null;
@@ -268,14 +280,15 @@ public sealed partial class RfqTextParser
         public DateTime? DeliveryDate { get; set; }
         public string? Grade { get; set; }
         public string? Dimensions { get; set; }
+        public decimal? TransportCost { get; set; }
         public bool HasContent =>
             LineItem is not null || MaterialNo is not null || Description is not null
             || DrawingNo is not null || Quantity is not null || DeliveryDate is not null
-            || Grade is not null || Dimensions is not null;
+            || Grade is not null || Dimensions is not null || TransportCost is not null;
 
         public RfqImportItemSuggestion ToSuggestion() =>
             new(LineItem, MaterialNo, Description, DrawingNo, Quantity, Unit,
-                DeliveryDate, Grade, Dimensions);
+                DeliveryDate, Grade, Dimensions, TransportCost);
     }
 
     [GeneratedRegex(@"^\s*(?:RFQ|Enquiry|Inquiry)\s*(?:Number|No\.?|#)\s*[:\-]\s*(?<value>.+?)\s*$", RegexOptions.IgnoreCase)]
@@ -322,6 +335,9 @@ public sealed partial class RfqTextParser
 
     [GeneratedRegex(@"(?:ENTRY\s+PLATE\s+)?THICKNESS\s*:\s*(?<value>\d+(?:\.\d+)?)\s*mm", RegexOptions.IgnoreCase)]
     private static partial Regex WegThicknessPattern();
+
+    [GeneratedRegex(@"\b(?:transport(?:ation)?|freight|shipping)\s*(?:cost|charges?|fee)\s*[:=\-]?\s*(?:(?:Rs\.?|INR)\s*)?(?<value>\d+(?:,\d{3})*(?:\.\d+)?)\b", RegexOptions.IgnoreCase)]
+    private static partial Regex TransportCostPattern();
 
     [GeneratedRegex(@"(?:RING|DEVICE|ALIGNMENT|BEARING|TEMPLATE|MATERIAL|PART|CABLE)\b", RegexOptions.IgnoreCase)]
     private static partial Regex WegDetailPattern();

@@ -51,6 +51,7 @@ public sealed class RfqImportService(
                 DrawingNo = Clean(itemRequest.DrawingNo),
                 Grade = Clean(itemRequest.Grade),
                 Dimensions = Clean(itemRequest.Dimensions),
+                TransportCost = itemRequest.TransportCost,
                 Quantity = itemRequest.Quantity,
                 Unit = itemRequest.Unit.Trim(),
                 DeliveryDate = itemRequest.DeliveryDate

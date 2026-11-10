@@ -22,6 +22,7 @@ export interface RfqItem {
   drawingNo?: string;
   grade?: string;
   dimensions?: string;
+  transportCost?: number | null;
   quantity: number;
   unit: string;
   deliveryDate?: string;
@@ -37,6 +38,7 @@ export interface RfqImportItem {
   deliveryDate?: string;
   grade?: string;
   dimensions?: string;
+  transportCost?: number | null;
 }
 
 export interface RfqPdfExtraction {

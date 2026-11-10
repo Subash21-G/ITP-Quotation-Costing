@@ -22,7 +22,7 @@ if (!Enum.TryParse<LicenseType>(questPdfLicenseName, true, out var questPdfLicen
 
 QuestPDF.Settings.License = questPdfLicense;
 
-var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key is required.");
+var jwtKey = builder.Configuration["Jwt:Key"] ?? Guid.NewGuid().ToString("N");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
@@ -65,8 +65,28 @@ using (var scope = app.Services.CreateScope())
     {
         if (!await roleManager.RoleExistsAsync(role))
         {
-            await roleManager.CreateAsync(new IdentityRole(role));
+            var created = await roleManager.CreateAsync(new IdentityRole(role));
+            if (!created.Succeeded)
+                throw new InvalidOperationException($"Could not initialize role {role}.");
         }
+    }
+
+    // Explicit local configuration provisions an administrator only when none exists.
+    // Never commit credentials or expose an anonymous administrator endpoint.
+    var bootstrapUsername = builder.Configuration["BootstrapAdmin:Username"];
+    var bootstrapPassword = builder.Configuration["BootstrapAdmin:Password"];
+    var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    if (!string.IsNullOrWhiteSpace(bootstrapUsername) &&
+        !(await users.GetUsersInRoleAsync(AuthService.Admin)).Any())
+    {
+        if (string.IsNullOrWhiteSpace(bootstrapPassword))
+            throw new InvalidOperationException("BootstrapAdmin:Password is required to provision the first administrator.");
+        var (_, error) = await scope.ServiceProvider.GetRequiredService<AuthService>().RegisterAsync(
+            new ITPQuotation.Api.DTOs.Auth.RegisterRequest
+            {
+                Username = bootstrapUsername, Password = bootstrapPassword, Role = AuthService.Admin
+            }, true);
+        if (error is not null) throw new InvalidOperationException($"Administrator provisioning failed: {error}");
     }
 }
 

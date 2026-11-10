@@ -26,6 +26,7 @@
         <mat-form-field appearance="outline"><mat-label>Material number</mat-label><input matInput [(ngModel)]="engineering.materialNo" /></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Short description</mat-label><input matInput maxlength="500" [(ngModel)]="engineering.shortDescription" /><mat-hint>From RFQ or material master; editable</mat-hint></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Metal</mat-label><mat-select [(ngModel)]="engineering.metalId" (selectionChange)="onMetal()"><mat-option [value]="0">{{ detectedMetal() }} (from RFQ)</mat-option>@for (metal of metals(); track metal.id) { <mat-option [value]="metal.id">{{ metal.name }} {{ metal.grade || '' }}</mat-option> }</mat-select><mat-hint>Latest master value is selected automatically; you can override it</mat-hint></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Specific gravity</mat-label><input matInput type="number" step="0.01" [(ngModel)]="specificGravity" /><mat-hint>From metal master; editable for this quote</mat-hint></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Density kg/m³</mat-label><input matInput type="number" [(ngModel)]="engineering.densityKgM3" /></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Current rate / kg</mat-label><input matInput type="number" [(ngModel)]="engineering.materialRatePerKg" (change)="calculateMaterialCost()" /><mat-hint>Fetched from the metal master; editable for today's quote</mat-hint></mat-form-field>
       </div>
@@ -100,6 +101,7 @@
         </div>
       </div>
       <div class="margin-row">
+        <mat-form-field appearance="outline"><mat-label>Transport cost (₹, total)</mat-label><input matInput type="number" min="0" [(ngModel)]="transportCost" /><mat-hint>From RFQ PDF if found; otherwise enter manually</mat-hint></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Overhead %</mat-label><input matInput type="number" [(ngModel)]="margins.overheadPercent" /></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Profit %</mat-label><input matInput type="number" [(ngModel)]="margins.profitPercent" /></mat-form-field>
       </div>
@@ -111,6 +113,7 @@
     <div class="summary-lines">
       <div><span>Raw material</span><strong>{{ rawMaterialCost() | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
       <div><span>Process & additional</span><strong>{{ processCost() | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
+      <div><span>Transport</span><strong>{{ transportCost | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
       <div class="subtotal"><span>Manufacturing cost</span><strong>{{ manufacturingCost() | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
       <div><span>Overhead ({{ margins.overheadPercent }}%)</span><strong>{{ overheadAmount() | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
       <div><span>Cost after overhead</span><strong>{{ costAfterOverhead() | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>

@@ -17,6 +17,20 @@ The HTTP profile listens on http://localhost:5263. Development OpenAPI is availa
 
 ## Frontend
 
+The UI opens directly at the dashboard. Login is not required for business
+screens or API operations. Anyone who can reach the app can view and edit its data.
+
+To provision an Admin account when the database has no Admin, configure
+`BootstrapAdmin:Username` and `BootstrapAdmin:Password` using .NET user secrets
+or environment variables (`BootstrapAdmin__Username`,
+`BootstrapAdmin__Password`) before starting the API. This runs only when no
+Admin exists. Public registration does not grant Admin or Estimator permissions.
+
+Configure `Jwt:Key`, `Jwt:Issuer`, and `Jwt:Audience` for your deployment; keep
+the signing key in secret configuration. Browser sessions use session storage,
+expire after eight hours, and are cleared locally on sign-out. Issued bearer
+tokens remain valid until expiry; server-side revocation is not implemented.
+
 The Angular application is in `frontend/itp-quotation-ui`. It uses the
 development proxy to send `/api` requests to the backend on port 5263.
 
@@ -108,6 +122,6 @@ The xUnit project uses an isolated EF Core in-memory database and an in-process 
 Customer, RFQ, Mastersheet management, RFQ PDF extraction with confirmed
 Read & Fix, engineering calculators, process costing, persistent cost sheets,
 quotations, immutable quotation revisions, and the Angular costing workspace.
-Login, OCR, reports, settings, and production
+OCR, reports, settings, and production
 deployment configuration are not included yet. The PDF path model property is
 reserved and is not writable through the RFQ request DTO.

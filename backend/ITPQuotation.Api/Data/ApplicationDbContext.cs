@@ -63,6 +63,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         modelBuilder.Entity<RfqItem>()
             .Property(x => x.Dimensions)
             .HasMaxLength(500);
+        modelBuilder.Entity<RfqItem>()
+            .Property(x => x.TransportCost)
+            .HasPrecision(18, 2);
 
         modelBuilder.Entity<MaterialMaster>(entity =>
         {

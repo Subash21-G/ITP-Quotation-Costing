@@ -36,6 +36,9 @@ public class RfqItemRequest
     [StringLength(500)]
     public string? Dimensions { get; set; }
 
+    [Range(typeof(decimal), "0", "999999999999999.99")]
+    public decimal? TransportCost { get; set; }
+
     [Range(typeof(decimal), "0.001", "999999999999999.999")]
     public decimal Quantity { get; set; }
 

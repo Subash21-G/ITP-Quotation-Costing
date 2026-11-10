@@ -3,7 +3,7 @@
     <h2>Good morning, Estimator.</h2>
     <p>Track incoming demand, costing readiness, and your active quotation pipeline.</p>
   </div>
-  <button mat-flat-button routerLink="/new-quotation">Create quotation</button>
+  @if (auth.canEdit()) { <button mat-flat-button routerLink="/new-quotation">Create quotation</button> }
 </div>
 
 @if (error()) {

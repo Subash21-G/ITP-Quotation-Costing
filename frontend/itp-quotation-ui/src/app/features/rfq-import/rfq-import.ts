@@ -24,6 +24,7 @@ interface ReviewItem {
   deliveryDate: string;
   grade: string;
   dimensions: string;
+  transportCost: number | null;
 }
 
 @Component({
@@ -168,6 +169,7 @@ export class RfqImport {
       deliveryDate: item.deliveryDate?.slice(0, 10) ?? '',
       grade: item.grade ?? '',
       dimensions: item.dimensions ?? '',
+      transportCost: item.transportCost ?? null,
     };
   }
 
@@ -182,6 +184,7 @@ export class RfqImport {
       deliveryDate: '',
       grade: '',
       dimensions: '',
+      transportCost: null,
     };
   }
 

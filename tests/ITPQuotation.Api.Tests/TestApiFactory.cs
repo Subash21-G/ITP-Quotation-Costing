@@ -16,6 +16,7 @@ namespace ITPQuotation.Api.Tests;
 
 public sealed class TestApiFactory : WebApplicationFactory<ApiAssemblyMarker>
 {
+    public bool UseTestAuthentication { get; init; } = true;
     private readonly string _databaseName = $"ITPQuotationTests-{Guid.NewGuid()}";
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -23,8 +24,9 @@ public sealed class TestApiFactory : WebApplicationFactory<ApiAssemblyMarker>
         builder.UseEnvironment("Development");
         builder.ConfigureServices(services =>
         {
-            services.AddAuthentication("Test")
-                .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", _ => { });
+            if (UseTestAuthentication)
+                services.AddAuthentication("Test")
+                    .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", _ => { });
             services.RemoveAll<IDbContextOptionsConfiguration<ApplicationDbContext>>();
             services.RemoveAll<ApplicationDbContext>();
             services.RemoveAll<DbContextOptions<ApplicationDbContext>>();

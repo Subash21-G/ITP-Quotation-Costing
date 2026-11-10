@@ -1,5 +1,5 @@
 import { CurrencyPipe, DecimalPipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -115,7 +115,15 @@ export class QuotationWorkspace {
     scrapWeight: 0,
     scrapRecoveryRate: 0,
   };
+  protected get specificGravity(): number {
+    return Number(this.engineering.densityKgM3) / 1000;
+  }
+
+  protected set specificGravity(value: number) {
+    this.engineering.densityKgM3 = Number(value) * 1000;
+  }
   protected margins = { overheadPercent: 10, profitPercent: 15 };
+  protected transportCost = 0;
   protected newLine: WorkspaceCostLine = {
     sequence: 1,
     category: 'CNC',
@@ -123,28 +131,49 @@ export class QuotationWorkspace {
     amount: 0,
   };
   private generatedQuotationNumber = '';
+  private calculatedWeightInputs = '';
+  private calculatedMaterialInputs = '';
+  private savedCostInputs = '';
+  private hasImportedDimensions = false;
 
-  protected readonly processCost = computed(() =>
-    this.processLines().reduce((total, line) => total + Number(line.amount || 0), 0),
-  );
-  protected readonly manufacturingCost = computed(
-    () => this.rawMaterialCost() + this.processCost(),
-  );
-  protected readonly overheadAmount = computed(
-    () => (this.manufacturingCost() * Number(this.margins.overheadPercent || 0)) / 100,
-  );
-  protected readonly costAfterOverhead = computed(
-    () => this.manufacturingCost() + this.overheadAmount(),
-  );
-  protected readonly profitAmount = computed(
-    () => (this.costAfterOverhead() * Number(this.margins.profitPercent || 0)) / 100,
-  );
-  protected readonly finalPrice = computed(
-    () => this.costAfterOverhead() + this.profitAmount(),
-  );
-  protected readonly unitPrice = computed(() =>
-    this.engineering.quantity > 0 ? this.finalPrice() / this.engineering.quantity : 0,
-  );
+  private weightInputs(): string {
+    const { shape, unit, densityKgM3, quantity, length, width, height, thickness,
+      diameter, outerDiameter, innerDiameter, side, acrossFlats } = this.engineering;
+    return JSON.stringify({ shape, unit, densityKgM3, quantity, length, width, height,
+      thickness, diameter, outerDiameter, innerDiameter, side, acrossFlats });
+  }
+
+  private materialInputs(): string {
+    return JSON.stringify({ weight: this.weightInputs(), rate: this.engineering.materialRatePerKg,
+      scrapWeight: this.engineering.scrapWeight,
+      scrapRecoveryRate: this.engineering.scrapRecoveryRate });
+  }
+
+  private costInputs(): string {
+    return JSON.stringify({ item: this.commercial.rfqItemId, material: this.materialInputs(),
+      materialNo: this.engineering.materialNo, lines: this.processLines(), transportCost: this.transportCost,
+      overhead: this.margins.overheadPercent,
+      profit: this.margins.profitPercent });
+  }
+
+  protected processCost(): number {
+    return this.processLines().reduce((total, line) => total + Number(line.amount || 0), 0);
+  }
+
+  protected manufacturingCost(): number {
+    return this.rawMaterialCost() + this.processCost() + Number(this.transportCost || 0);
+  }
+  protected overheadAmount(): number {
+    return this.manufacturingCost() * Number(this.margins.overheadPercent || 0) / 100;
+  }
+  protected costAfterOverhead(): number { return this.manufacturingCost() + this.overheadAmount(); }
+  protected profitAmount(): number {
+    return this.costAfterOverhead() * Number(this.margins.profitPercent || 0) / 100;
+  }
+  protected finalPrice(): number { return this.costAfterOverhead() + this.profitAmount(); }
+  protected unitPrice(): number {
+    return this.engineering.quantity > 0 ? this.finalPrice() / this.engineering.quantity : 0;
+  }
 
   constructor() {
     this.api.customers().subscribe((rows) => {
@@ -166,6 +195,8 @@ export class QuotationWorkspace {
   }
 
   protected onCustomer(): void {
+    this.costSheet.set(null);
+    this.savedCostInputs = '';
     this.commercial.rfqId = 0;
     this.commercial.rfqItemId = 0;
     this.items.set([]);
@@ -173,14 +204,25 @@ export class QuotationWorkspace {
   }
 
   protected onRfq(): void {
+    this.costSheet.set(null);
+    this.savedCostInputs = '';
     this.commercial.rfqItemId = 0;
     if (!this.commercial.rfqId) return;
-    this.api.rfqItems(this.commercial.rfqId).subscribe((rows) => this.items.set(rows));
+    this.api.rfqItems(this.commercial.rfqId).subscribe((rows) => {
+      this.items.set(rows);
+      if (rows.length === 1) {
+        this.commercial.rfqItemId = rows[0].id;
+        this.onItem();
+      }
+    });
   }
 
   protected onItem(): void {
+    this.costSheet.set(null);
+    this.savedCostInputs = '';
     const item = this.items().find((row) => row.id === this.commercial.rfqItemId);
     if (!item) return;
+    this.transportCost = Number(item.transportCost ?? 0);
     this.engineering.materialNo = item.materialNo;
     this.engineering.shortDescription = this.conciseDescription(item.description);
     this.engineering.quantity = item.quantity;
@@ -196,6 +238,7 @@ export class QuotationWorkspace {
     if (!metal) return;
     this.engineering.densityKgM3 = metal.densityKgM3;
     this.engineering.materialRatePerKg = metal.defaultRatePerKg;
+    this.calculateImportedWeight();
   }
 
   protected refreshMetalData(item?: RfqItem): void {
@@ -223,7 +266,10 @@ export class QuotationWorkspace {
         this.engineering.materialRatePerKg =
           details.material.metalMaterial?.defaultRatePerKg ??
           this.engineering.materialRatePerKg;
-        this.engineering.shape = this.normalizeShape(details.material.rawMaterialShape);
+        if (details.material.rawMaterialShape?.trim()) {
+          this.engineering.shape = this.normalizeShape(details.material.rawMaterialShape);
+        }
+        this.calculateImportedWeight();
         this.processLines.set(
           details.routing.map((route, index) => ({
             sequence: index + 2,
@@ -250,6 +296,7 @@ export class QuotationWorkspace {
   protected calculateWeight(): void {
     this.busy.set(true);
     const e = this.engineering;
+    const inputs = this.weightInputs();
     const payload = {
       shape: e.shape,
       unit: e.unit,
@@ -268,7 +315,9 @@ export class QuotationWorkspace {
     };
     this.api.calculateMetalWeight(payload).subscribe({
       next: (result) => {
+        if (inputs !== this.weightInputs()) { this.busy.set(false); return; }
         this.weight.set(result);
+        this.calculatedWeightInputs = inputs;
         this.busy.set(false);
         this.calculateMaterialCost();
       },
@@ -282,6 +331,11 @@ export class QuotationWorkspace {
   protected calculateMaterialCost(): void {
     const weight = this.weight();
     if (!weight) return;
+    if (this.calculatedWeightInputs !== this.weightInputs()) {
+      this.snack.open('Calculate weight again after changing material or dimensions', 'Dismiss', { duration: 3500 });
+      return;
+    }
+    const inputs = this.materialInputs();
     this.api
       .calculateRawMaterial({
         weightPerPiece: weight.weightPerPieceKg,
@@ -291,7 +345,11 @@ export class QuotationWorkspace {
         scrapRecoveryRate: Number(this.engineering.scrapRecoveryRate),
       })
       .subscribe({
-        next: (result) => this.rawMaterialCost.set(result.netMaterialCost),
+        next: (result) => {
+          if (inputs !== this.materialInputs()) return;
+          this.rawMaterialCost.set(result.netMaterialCost);
+          this.calculatedMaterialInputs = inputs;
+        },
         error: () => this.error.set('Raw material costing could not be calculated.'),
       });
   }
@@ -323,6 +381,20 @@ export class QuotationWorkspace {
       this.snack.open('Select an RFQ item first', 'Dismiss', { duration: 2800 });
       return;
     }
+    if (this.calculatedWeightInputs !== this.weightInputs() ||
+        this.calculatedMaterialInputs !== this.materialInputs()) {
+      this.snack.open('Recalculate weight and material cost before saving', 'Dismiss', { duration: 4000 });
+      return;
+    }
+    if (Number(this.engineering.materialRatePerKg) <= 0) {
+      this.snack.open('Enter the material rate per kg before saving', 'Dismiss', { duration: 4000 });
+      return;
+    }
+    if (!Number.isFinite(Number(this.transportCost)) || Number(this.transportCost) < 0) {
+      this.snack.open('Transport cost must be zero or greater', 'Dismiss', { duration: 4000 });
+      return;
+    }
+    const inputs = this.costInputs();
     const lines = [
       {
         sequence: 1,
@@ -331,6 +403,12 @@ export class QuotationWorkspace {
         amount: this.rawMaterialCost(),
       },
       ...this.processLines().map((line, index) => ({ ...line, sequence: index + 2 })),
+      ...(Number(this.transportCost) > 0 ? [{
+        sequence: this.processLines().length + 2,
+        category: 'Transport',
+        description: 'Transport cost',
+        amount: Number(this.transportCost),
+      }] : []),
     ];
     this.busy.set(true);
     this.api
@@ -344,6 +422,7 @@ export class QuotationWorkspace {
       .subscribe({
         next: (sheet) => {
           this.costSheet.set(sheet);
+          this.savedCostInputs = inputs;
           this.busy.set(false);
           this.snack.open('Cost sheet saved', 'Dismiss', { duration: 2400 });
         },
@@ -361,6 +440,10 @@ export class QuotationWorkspace {
       this.snack.open('Save the cost sheet and enter a quotation number', 'Dismiss', {
         duration: 3300,
       });
+      return;
+    }
+    if (this.savedCostInputs !== this.costInputs()) {
+      this.snack.open('Cost inputs changed. Recalculate and save the cost sheet again', 'Dismiss', { duration: 4000 });
       return;
     }
     const today = new Date().toISOString().slice(0, 10);
@@ -415,14 +498,19 @@ export class QuotationWorkspace {
     if (!grade) return;
 
     const normalizedGrade = this.normalizeMaterialText(grade);
+    const family = normalizedGrade.includes('stainlesssteel') ? 'ss'
+      : normalizedGrade.includes('carbonsteel') || normalizedGrade.includes('mildsteel') ? 'ms'
+      : normalizedGrade.includes('castiron') ? 'castiron'
+      : normalizedGrade.includes('aluminum') ? 'aluminium'
+      : normalizedGrade;
     const metal = this.metals().find((candidate) => {
       const candidateText = this.normalizeMaterialText(
         `${candidate.name} ${candidate.grade ?? ''}`,
       );
       return (
-        candidateText === normalizedGrade ||
-        candidateText.includes(normalizedGrade) ||
-        normalizedGrade.includes(candidateText)
+        candidateText === family ||
+        candidateText.includes(family) ||
+        family.includes(candidateText)
       );
     });
     if (!metal) {
@@ -433,6 +521,13 @@ export class QuotationWorkspace {
     this.engineering.metalId = metal.id;
     this.engineering.densityKgM3 = metal.densityKgM3;
     this.engineering.materialRatePerKg = metal.defaultRatePerKg;
+    this.calculateImportedWeight();
+  }
+
+  private calculateImportedWeight(): void {
+    if (this.hasImportedDimensions && Number(this.engineering.densityKgM3) > 0) {
+      this.calculateWeight();
+    }
   }
 
   private generateQuotationNumber(item: RfqItem): void {
@@ -484,6 +579,10 @@ export class QuotationWorkspace {
     }
 
     const dimensions = (item.dimensions ?? '').match(/\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+    this.hasImportedDimensions = dimensions.length >= 2 &&
+      (this.engineering.shape !== 'Plate' && this.engineering.shape !== 'SquareTube' &&
+       this.engineering.shape !== 'RectangularTube' || dimensions.length >= 3 ||
+       this.numberAfter(fullDescription, /(?:ENTRY\s+PLATE\s+)?THICKNESS\s*:/i) !== null);
     if (this.engineering.shape === 'RoundTube' && dimensions.length >= 2) {
       this.engineering.outerDiameter = dimensions[0];
       this.engineering.innerDiameter = dimensions[1];
@@ -499,9 +598,9 @@ export class QuotationWorkspace {
       if (dimensions.length >= 2) this.engineering.length = dimensions[1];
     } else if (dimensions.length >= 2) {
       this.engineering.length =
-        this.numberAfter(fullDescription, /(?:ENTRY\s+PLATE\s+)?LENGTH\s*:/i) ?? dimensions[1];
+        this.numberAfter(fullDescription, /(?:ENTRY\s+PLATE\s+)?LENGTH\s*:/i) ?? dimensions[0];
       this.engineering.width =
-        this.numberAfter(fullDescription, /(?:ENTRY\s+PLATE\s+)?WIDTH\s*:/i) ?? dimensions[0];
+        this.numberAfter(fullDescription, /(?:ENTRY\s+PLATE\s+)?WIDTH\s*:/i) ?? dimensions[1];
       this.engineering.thickness =
         this.numberAfter(fullDescription, /(?:ENTRY\s+PLATE\s+)?THICKNESS\s*:/i) ??
         (dimensions.length >= 3 ? dimensions[2] : this.engineering.thickness);
@@ -512,13 +611,15 @@ export class QuotationWorkspace {
     if (!value) return '';
     return (
       value.match(
-        /\b(?:CARBON\s+STEEL|CAST\s+IRON|STAINLESS\s+STEEL|ALUMINIUM|ALUMINUM|BRASS|COPPER)(?:\s+SAE)?\s+[A-Z0-9][A-Z0-9./-]*/i,
-      )?.[0] ?? ''
+        /\b(?:CARBON\s+STEEL|CAST\s+IRON|STAINLESS\s+STEEL|ALUMINIUM|ALUMINUM|BRASS|COPPER|NYLON)(?:\s+SAE)?\s+[A-Z0-9][A-Z0-9./-]*/i,
+      )?.[0] ?? value.match(/\b(?:MS|SS|CAST\s+IRON|ALUMINIUM|ALUMINUM|BRASS|COPPER|NYLON)\b/i)?.[0] ?? ''
     ).toUpperCase();
   }
 
   private numberAfter(value: string, label: RegExp): number | null {
-    const match = value.slice(value.search(label)).match(/:\s*(\d+(?:\.\d+)?)/);
+    const index = value.search(label);
+    if (index < 0) return null;
+    const match = value.slice(index).match(/:\s*(\d+(?:\.\d+)?)/);
     return match ? Number(match[1]) : null;
   }
 

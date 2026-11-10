@@ -1,3 +1,4 @@
+import { AuthService } from '../../core/auth.service';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -29,6 +30,7 @@ import { ApiService } from '../../core/api.service';
   styleUrl: './materials.scss',
 })
 export class Materials {
+  protected readonly auth = inject(AuthService);
   private readonly api = inject(ApiService);
   private readonly snack = inject(MatSnackBar);
   protected readonly rows = signal<MaterialMaster[]>([]);

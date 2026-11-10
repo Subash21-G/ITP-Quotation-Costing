@@ -44,6 +44,7 @@
 
   <nav class="nav">
     @for (item of navItems; track item.route) {
+      @if (!item.accent || auth.canEdit()) {
       <a
         [routerLink]="item.route"
         routerLinkActive="active"
@@ -52,6 +53,7 @@
         <span class="nav-glyph">{{ item.glyph }}</span>
         {{ item.label }}
       </a>
+      }
     }
 
     <p class="nav-label">Masters</p>
@@ -70,6 +72,6 @@
 
   <div class="sidebar-footer">
     <div class="avatar">IT</div>
-    <div><strong>Estimator</strong><span>Local workspace</span></div>
+    <div><strong>ITP Quotation</strong></div>
   </div>
 </ng-template>

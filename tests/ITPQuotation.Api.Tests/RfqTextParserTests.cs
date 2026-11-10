@@ -7,6 +7,20 @@ public sealed class RfqTextParserTests
     private readonly RfqTextParser _parser = new();
 
     [Fact]
+    public void Parse_LabeledRfq_ExtractsTransportCostWhenPresent()
+    {
+        var result = _parser.Parse("rfq.pdf", """
+            RFQ Number: R-1
+            Customer Name: Buyer
+            Material Number: MAT-1
+            Quantity: 2 Nos
+            Transport charges: INR 1,250.50
+            """, 1);
+
+        Assert.Equal(1250.50m, Assert.Single(result.Items).TransportCost);
+    }
+
+    [Fact]
     public void Parse_LabeledRfq_ExtractsHeaderAndMultipleItems()
     {
         var result = _parser.Parse(

@@ -1,9 +1,9 @@
 <div class="page-heading">
   <div><h2>Request for quotations</h2><p>Customer demand waiting to be costed and converted.</p></div>
-  <div class="heading-actions">
+  @if (auth.canEdit()) { <div class="heading-actions">
     <button mat-stroked-button routerLink="/rfqs/import">Import RFQ PDF</button>
     <button mat-flat-button routerLink="/new-quotation">Cost an RFQ</button>
-  </div>
+  </div> }
 </div>
 
 @if (error()) { <div class="error-banner">{{ error() }}</div> }
@@ -24,10 +24,10 @@
             <td>{{ rfq.rfqDate ? (rfq.rfqDate | date: 'dd MMM yyyy') : 'Not specified' }}</td>
             <td><span class="status-pill">{{ rfq.status }}</span></td>
             <td>
-              <a routerLink="/new-quotation" [queryParams]="{ rfqId: rfq.id }">Open →</a>
+              @if (auth.canEdit()) { <a routerLink="/new-quotation" [queryParams]="{ rfqId: rfq.id }">Open →</a>
               <button mat-button type="button" [disabled]="deletingId() !== null" (click)="deleteRfq(rfq)">
                 {{ deletingId() === rfq.id ? 'Deleting…' : 'Delete' }}
-              </button>
+              </button> }
             </td>
           </tr>
         } @empty {

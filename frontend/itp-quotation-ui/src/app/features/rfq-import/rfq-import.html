@@ -95,6 +95,7 @@
             <mat-form-field appearance="outline"><mat-label>Drawing</mat-label><input matInput [(ngModel)]="item.drawingNo" (ngModelChange)="reviewed = false" /></mat-form-field>
             <mat-form-field appearance="outline"><mat-label>Grade</mat-label><input matInput [(ngModel)]="item.grade" (ngModelChange)="reviewed = false" /></mat-form-field>
             <mat-form-field appearance="outline" class="span-2"><mat-label>Dimensions</mat-label><input matInput [(ngModel)]="item.dimensions" (ngModelChange)="reviewed = false" /></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Transport cost (₹)</mat-label><input matInput type="number" min="0" [(ngModel)]="item.transportCost" (ngModelChange)="reviewed = false" /><mat-hint>From PDF if found; otherwise enter manually</mat-hint></mat-form-field>
             <mat-form-field appearance="outline"><mat-label>Quantity</mat-label><input matInput type="number" min="0.001" step="0.001" [(ngModel)]="item.quantity" (ngModelChange)="reviewed = false" /></mat-form-field>
             <mat-form-field appearance="outline"><mat-label>Unit</mat-label><input matInput [(ngModel)]="item.unit" (ngModelChange)="reviewed = false" /></mat-form-field>
             <mat-form-field appearance="outline"><mat-label>Delivery date</mat-label><input matInput type="date" [(ngModel)]="item.deliveryDate" (ngModelChange)="reviewed = false" /></mat-form-field>

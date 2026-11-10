@@ -1,3 +1,4 @@
+import { AuthService } from '../../core/auth.service';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -21,6 +22,7 @@ interface FieldDefinition {
   styleUrls: ['../shared-list.scss', './master-data.scss'],
 })
 export class MasterData {
+  protected readonly auth = inject(AuthService);
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly snack = inject(MatSnackBar);

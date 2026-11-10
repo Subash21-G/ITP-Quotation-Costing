@@ -2,7 +2,7 @@
   <div><h2>{{ title() }}</h2><p>{{ description() }}</p></div>
 </div>
 
-<div class="master-layout" [class.single]="!canCreate()">
+<div class="master-layout" [class.single]="!canCreate() || !auth.canEdit()">
   <section class="surface list-card">
     <div class="list-toolbar"><div><strong>{{ rows().length }} records</strong><span>Active master data</span></div><span class="legend"><i></i> API connected</span></div>
     <div class="table-wrap">
@@ -19,7 +19,7 @@
     </div>
   </section>
 
-  @if (canCreate()) {
+  @if (canCreate() && auth.canEdit()) {
     <aside class="surface quick-create">
       <header><span>Quick create</span><h3>Add {{ title().toLowerCase() }}</h3></header>
       @if (type() === 'metals') {

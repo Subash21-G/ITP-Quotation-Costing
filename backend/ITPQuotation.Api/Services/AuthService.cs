@@ -23,14 +23,19 @@ public sealed class AuthService(UserManager<ApplicationUser> users, IConfigurati
             : null;
     }
 
-    public async Task<(AuthResponse? Result, string? Error)> RegisterAsync(RegisterRequest request, bool firstUser)
+    public async Task<(AuthResponse? Result, string? Error)> RegisterAsync(RegisterRequest request, bool allowRoleSelection)
     {
-        var role = firstUser ? Roles.FirstOrDefault(x => x.Equals(request.Role, StringComparison.OrdinalIgnoreCase)) : Viewer;
+        var role = allowRoleSelection ? Roles.FirstOrDefault(x => x.Equals(request.Role, StringComparison.OrdinalIgnoreCase)) : Viewer;
         if (role is null) return (null, "Role must be Admin, Estimator, or Viewer.");
         var user = new ApplicationUser { UserName = request.Username.Trim(), DisplayName = request.DisplayName?.Trim() };
         var created = await users.CreateAsync(user, request.Password);
         if (!created.Succeeded) return (null, string.Join(" ", created.Errors.Select(x => x.Description)));
-        await users.AddToRoleAsync(user, role);
+        var assigned = await users.AddToRoleAsync(user, role);
+        if (!assigned.Succeeded)
+        {
+            await users.DeleteAsync(user);
+            return (null, string.Join(" ", assigned.Errors.Select(x => x.Description)));
+        }
         return (await TokenAsync(user), null);
     }
 

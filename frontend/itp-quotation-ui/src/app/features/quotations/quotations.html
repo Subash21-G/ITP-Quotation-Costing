@@ -1,6 +1,6 @@
 <div class="page-heading">
   <div><h2>Quotations</h2><p>Commercial offers with protected costing revisions.</p></div>
-  <button mat-flat-button routerLink="/new-quotation">New quotation</button>
+  @if (auth.canEdit()) { <button mat-flat-button routerLink="/new-quotation">New quotation</button> }
 </div>
 
 @if (error()) { <div class="error-banner" role="alert">{{ error() }}</div> }
@@ -36,8 +36,8 @@
             <td><span class="status-pill">{{ quote.status }}</span></td>
             <td class="right money">{{ quote.totalPrice | currency: 'INR' : 'symbol' : '1.2-2' }}</td>
             <td class="right">
-              <a mat-button [href]="api.quotationPdfUrl(quote.id)" target="_blank" rel="noopener">PDF</a>
-              @if (quote.status === 'Accepted' || quote.status === 'POReceived') {
+              <button mat-button (click)="downloadPdf(quote)" [disabled]="downloading() !== null">{{ downloading() === quote.id ? 'Downloading…' : 'PDF' }}</button>
+              @if (auth.canEdit() && (quote.status === 'Accepted' || quote.status === 'POReceived')) {
                 <button mat-button type="button" [disabled]="exporting()" (click)="selectExport(quote)">Send to POTracker</button>
               }
               @if (quote.poTrackerPurchaseOrderId) {

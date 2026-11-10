@@ -5,6 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { RouterLink } from '@angular/router';
 import { Quotation } from '../../core/api.models';
 import { ApiService } from '../../core/api.service';
+import { AuthService } from '../../core/auth.service';
 
 @Component({
   selector: 'app-quotations',
@@ -13,6 +14,26 @@ import { ApiService } from '../../core/api.service';
   styleUrl: '../shared-list.scss',
 })
 export class Quotations {
+  protected readonly auth = inject(AuthService);
+  protected readonly downloading = signal<number | null>(null);
+
+  protected downloadPdf(quote: Quotation): void {
+    if (this.downloading() !== null) return;
+    this.downloading.set(quote.id);
+    this.error.set('');
+    this.api.quotationPdf(quote.id).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `quotation-${quote.id}-rev-${quote.revision}.pdf`;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        this.downloading.set(null);
+      },
+      error: () => { this.error.set('Unable to download the quotation PDF.'); this.downloading.set(null); },
+    });
+  }
   protected readonly api = inject(ApiService);
   protected readonly rows = signal<Quotation[]>([]);
   protected readonly loading = signal(true);

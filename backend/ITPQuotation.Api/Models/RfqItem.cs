@@ -18,6 +18,8 @@ public class RfqItem
 
     public string? Dimensions { get; set; }
 
+    public decimal? TransportCost { get; set; }
+
     public decimal Quantity { get; set; }
 
     public string Unit { get; set; } = "Nos";

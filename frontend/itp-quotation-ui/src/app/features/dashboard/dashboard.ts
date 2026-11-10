@@ -1,3 +1,4 @@
+import { AuthService } from '../../core/auth.service';
 import { CurrencyPipe, DecimalPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
@@ -14,6 +15,7 @@ import { ApiService } from '../../core/api.service';
   styleUrl: './dashboard.scss',
 })
 export class Dashboard {
+  protected readonly auth = inject(AuthService);
   private readonly api = inject(ApiService);
   protected readonly loading = signal(true);
   protected readonly error = signal('');
