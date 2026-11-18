@@ -23,9 +23,9 @@ public sealed class CostSheetCalculatorTests
         Assert.Equal(1600m, result.ManufacturingCost);
         Assert.Equal(160m, result.OverheadAmount);
         Assert.Equal(1760m, result.CostAfterOverhead);
-        Assert.Equal(352m, result.ProfitAmount);
-        Assert.Equal(2112m, result.SellingPrice);
-        Assert.Equal(211.2m, result.UnitSellingPrice);
+        Assert.Equal(120m, result.ProfitAmount);
+        Assert.Equal(1880m, result.SellingPrice);
+        Assert.Equal(188m, result.UnitSellingPrice);
         Assert.Equal(CostSheetValues.Categories.Length, result.CategoryTotals.Count);
         Assert.Equal(1000m, result.CategoryTotals[CostSheetValues.RawMaterial]);
         Assert.Equal(500m, result.CategoryTotals[CostSheetValues.Cnc]);
@@ -50,6 +50,24 @@ public sealed class CostSheetCalculatorTests
     }
 
     [Fact]
+    public void Calculate_ExcludesRawMaterialAndCuttingFromProfit()
+    {
+        var result = _calculator.Calculate(
+            quantity: 1m,
+            overheadPercent: 0m,
+            profitPercent: 10m,
+            [
+                new CostSheetLineAmount(CostSheetValues.RawMaterial, 1000m),
+                new CostSheetLineAmount(CostSheetValues.Cutting, 200m),
+                new CostSheetLineAmount(CostSheetValues.Turning, 300m)
+            ]);
+
+        Assert.Equal(1500m, result.ManufacturingCost);
+        Assert.Equal(30m, result.ProfitAmount);
+        Assert.Equal(1530m, result.SellingPrice);
+    }
+
+    [Fact]
     public void Calculate_DoesNotRoundIntermediateValues()
     {
         const decimal amount = 123.456789m;
@@ -65,7 +83,7 @@ public sealed class CostSheetCalculatorTests
 
         var expectedOverhead = amount * overhead / 100m;
         var expectedAfterOverhead = amount + expectedOverhead;
-        var expectedProfit = expectedAfterOverhead * profit / 100m;
+        var expectedProfit = amount * profit / 100m;
         var expectedSellingPrice = expectedAfterOverhead + expectedProfit;
 
         Assert.Equal(expectedOverhead, result.OverheadAmount);

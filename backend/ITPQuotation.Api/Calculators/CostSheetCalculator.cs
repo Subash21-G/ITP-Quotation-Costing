@@ -52,11 +52,15 @@ public sealed class CostSheetCalculator : ICostSheetCalculator
             categoryTotals[category] += line.Amount;
         }
 
-        var manufacturingCost = categoryTotals.Values.Sum();
+        var transportCost = categoryTotals[CostSheetValues.Transport];
+        var manufacturingCost = categoryTotals.Values.Sum() - transportCost;
         var overheadAmount = manufacturingCost * overheadPercent / 100m;
         var costAfterOverhead = manufacturingCost + overheadAmount;
-        var profitAmount = costAfterOverhead * profitPercent / 100m;
-        var sellingPrice = costAfterOverhead + profitAmount;
+        var processCost = manufacturingCost
+            - categoryTotals[CostSheetValues.RawMaterial]
+            - categoryTotals[CostSheetValues.Cutting];
+        var profitAmount = processCost * profitPercent / 100m;
+        var sellingPrice = costAfterOverhead + profitAmount + transportCost;
 
         return new CostSheetCalculationResult(
             categoryTotals,

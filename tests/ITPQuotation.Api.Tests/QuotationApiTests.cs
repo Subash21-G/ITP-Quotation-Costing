@@ -1,5 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
+using ITPQuotation.Api.Data;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ITPQuotation.Api.Tests;
 
@@ -19,8 +21,8 @@ public sealed class QuotationApiTests(TestApiFactory factory)
 
         Assert.NotNull(created);
         Assert.Equal(0, created.Revision);
-        Assert.Equal(1320m, created.TotalPrice);
-        Assert.Equal(132m, Assert.Single(created.Items).UnitPrice);
+        Assert.Equal(1100m, created.TotalPrice);
+        Assert.Equal(110m, Assert.Single(created.Items).UnitPrice);
 
         var updateCostResponse = await _client.PutAsJsonAsync(
             $"/api/cost-sheets/{seed.CostSheetId}",
@@ -51,14 +53,14 @@ public sealed class QuotationApiTests(TestApiFactory factory)
 
         Assert.NotNull(revised);
         Assert.Equal(1, revised.Revision);
-        Assert.Equal(2640m, revised.TotalPrice);
+        Assert.Equal(2200m, revised.TotalPrice);
 
         var revision0 = await _client.GetFromJsonAsync<QuotationRevisionApiResponse>(
             $"/api/quotations/{created.Id}/revisions/0");
         var revision1 = await _client.GetFromJsonAsync<QuotationRevisionApiResponse>(
             $"/api/quotations/{created.Id}/revisions/1");
-        Assert.Equal(1320m, revision0!.Snapshot.TotalPrice);
-        Assert.Equal(2640m, revision1!.Snapshot.TotalPrice);
+        Assert.Equal(1100m, revision0!.Snapshot.TotalPrice);
+        Assert.Equal(2200m, revision1!.Snapshot.TotalPrice);
 
         var revisions = await _client.GetFromJsonAsync<List<RevisionSummary>>(
             $"/api/quotations/{created.Id}/revisions");
@@ -92,6 +94,47 @@ public sealed class QuotationApiTests(TestApiFactory factory)
     }
 
     [Fact]
+    public async Task DeleteQuotation_RemovesRevisionsAndAllowsRfqDeletion()
+    {
+        var seed = await CreateCostedRfqItemAsync();
+        var create = await _client.PostAsJsonAsync("/api/quotations", CreateQuotationRequest(seed));
+        create.EnsureSuccessStatusCode();
+        var quotation = await create.Content.ReadFromJsonAsync<QuotationApiResponse>();
+
+        var delete = await _client.DeleteAsync($"/api/quotations/{quotation!.Id}");
+
+        Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await _client.GetAsync($"/api/quotations/{quotation.Id}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await _client.GetAsync($"/api/quotations/{quotation.Id}/revisions/0")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await _client.DeleteAsync($"/api/quotations/{quotation.Id}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent,
+            (await _client.DeleteAsync($"/api/rfqs/{seed.RfqId}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteExportedQuotation_ReturnsConflict()
+    {
+        var seed = await CreateCostedRfqItemAsync();
+        var create = await _client.PostAsJsonAsync("/api/quotations", CreateQuotationRequest(seed));
+        create.EnsureSuccessStatusCode();
+        var quotation = await create.Content.ReadFromJsonAsync<QuotationApiResponse>();
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var row = await context.Quotations.FindAsync(quotation!.Id);
+            row!.PoTrackerPurchaseOrderId = 123;
+            await context.SaveChangesAsync();
+        }
+
+        Assert.Equal(HttpStatusCode.Conflict,
+            (await _client.DeleteAsync($"/api/quotations/{quotation!.Id}")).StatusCode);
+    }
+
+    [Fact]
     public async Task CreateQuotation_WhenItemHasNoCostSheet_ReturnsBadRequest()
     {
         var seed = await CreateRfqItemAsync();
@@ -119,8 +162,12 @@ public sealed class QuotationApiTests(TestApiFactory factory)
         var currentPdf = await _client.GetAsync($"/api/quotations/{quotation!.Id}/pdf");
         var revisionPdf = await _client.GetAsync(
             $"/api/quotations/{quotation.Id}/revisions/0/pdf");
+        var currentCostingPdf = await _client.GetAsync(
+            $"/api/quotations/{quotation.Id}/costing-pdf");
+        var revisionCostingPdf = await _client.GetAsync(
+            $"/api/quotations/{quotation.Id}/revisions/0/costing-pdf");
 
-        foreach (var response in new[] { currentPdf, revisionPdf })
+        foreach (var response in new[] { currentPdf, revisionPdf, currentCostingPdf, revisionCostingPdf })
         {
             Assert.True(
                 response.IsSuccessStatusCode,

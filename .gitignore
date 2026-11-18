@@ -4,6 +4,8 @@
 **/TestResults/
 **/coverage/
 /output/
+/tmp/
+/.playwright-mcp/
 /frontend/package-lock.json
 *.trx
 *.coverage

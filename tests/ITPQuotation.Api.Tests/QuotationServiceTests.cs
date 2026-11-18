@@ -21,7 +21,7 @@ public sealed class QuotationServiceTests
             CancellationToken.None);
 
         Assert.Equal(0, result.Revision);
-        Assert.Equal(1320m, result.TotalPrice);
+        Assert.Equal(1100m, result.TotalPrice);
         var item = Assert.Single(result.Items);
         Assert.Equal(80m, item.MaterialRatePerKg);
         Assert.Equal(7850m, item.DensityKgM3);
@@ -70,7 +70,7 @@ public sealed class QuotationServiceTests
 
         Assert.NotNull(revised);
         Assert.Equal(1, revised.Revision);
-        Assert.Equal(2640m, revised.TotalPrice);
+        Assert.Equal(2200m, revised.TotalPrice);
         Assert.Equal(999m, Assert.Single(revised.Items).MaterialRatePerKg);
 
         var revision0 = await service.GetRevisionAsync(
@@ -84,10 +84,10 @@ public sealed class QuotationServiceTests
 
         Assert.NotNull(revision0);
         Assert.NotNull(revision1);
-        Assert.Equal(1320m, revision0.Snapshot.TotalPrice);
+        Assert.Equal(1100m, revision0.Snapshot.TotalPrice);
         Assert.Equal(80m, Assert.Single(revision0.Snapshot.Items).MaterialRatePerKg);
         Assert.Equal(7850m, Assert.Single(revision0.Snapshot.Items).DensityKgM3);
-        Assert.Equal(2640m, revision1.Snapshot.TotalPrice);
+        Assert.Equal(2200m, revision1.Snapshot.TotalPrice);
         Assert.Equal(999m, Assert.Single(revision1.Snapshot.Items).MaterialRatePerKg);
         Assert.Equal(2, await context.QuotationRevisions.CountAsync());
     }

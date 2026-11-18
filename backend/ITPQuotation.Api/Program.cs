@@ -45,13 +45,15 @@ builder.Services.AddScoped<CostSheetService>();
 builder.Services.AddScoped<QuotationService>();
 builder.Services.AddHttpClient<PoTrackerExportService>(client => client.Timeout = TimeSpan.FromSeconds(30))
     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
+builder.Services.AddHttpClient<PoTrackerMastersheetService>(client => client.Timeout = TimeSpan.FromSeconds(30))
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
 builder.Services.AddSingleton<IQuotationPdfGenerator, QuestPdfQuotationPdfGenerator>();
 builder.Services.AddSingleton<IRfqPdfTextExtractor, PdfPigRfqTextExtractor>();
 builder.Services.AddSingleton<RfqTextParser>();
 builder.Services.AddScoped<RfqImportService>();
 builder.Services.AddScoped<AuthService>();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options => options.Filters.Add<BusinessAccessFilter>());
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<MasterDataExceptionHandler>();

@@ -22,8 +22,8 @@ public sealed class CostSheetApiTests(TestApiFactory factory)
         Assert.Equal(itemId, created.RfqItemId);
         Assert.Equal(1500m, created.ManufacturingCost);
         Assert.Equal(150m, created.OverheadAmount);
-        Assert.Equal(1980m, created.SellingPrice);
-        Assert.Equal(198m, created.UnitSellingPrice);
+        Assert.Equal(1750m, created.SellingPrice);
+        Assert.Equal(175m, created.UnitSellingPrice);
         Assert.Equal(18, created.CategoryTotals.Count);
         Assert.Equal(0m, created.CategoryTotals["Transport"]);
 
@@ -67,8 +67,8 @@ public sealed class CostSheetApiTests(TestApiFactory factory)
         var updated = await updateResponse.Content.ReadFromJsonAsync<CostSheetApiResponse>();
         Assert.NotNull(updated);
         Assert.Single(updated.Lines);
-        Assert.Equal(462m, updated.SellingPrice);
-        Assert.Equal(115.5m, updated.UnitSellingPrice);
+        Assert.Equal(460m, updated.SellingPrice);
+        Assert.Equal(115m, updated.UnitSellingPrice);
 
         var deleteResponse = await _client.DeleteAsync($"/api/cost-sheets/{created.Id}");
         Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);

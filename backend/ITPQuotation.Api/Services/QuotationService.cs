@@ -49,6 +49,24 @@ public sealed class QuotationService(
         return quotation is null ? null : ToResponse(quotation);
     }
 
+    public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken)
+    {
+        var quotation = await context.Quotations
+            .Include(x => x.Items)
+            .Include(x => x.Revisions)
+            .SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (quotation is null) return false;
+        if (quotation.PoTrackerPurchaseOrderId.HasValue)
+            throw new QuotationConflictException(
+                "Quotation was sent to POTracker and cannot be deleted.");
+
+        context.QuotationItems.RemoveRange(quotation.Items);
+        context.QuotationRevisions.RemoveRange(quotation.Revisions);
+        context.Quotations.Remove(quotation);
+        await context.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
     public async Task<QuotationResponse> CreateAsync(
         QuotationCreateRequest request,
         CancellationToken cancellationToken)

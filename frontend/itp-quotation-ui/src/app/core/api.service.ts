@@ -8,6 +8,7 @@ import {
   MaterialMaster,
   MetalMaterial,
   MetalWeightResult,
+  PoTrackerProcessOption,
   ProcessMaster,
   Quotation,
   Rfq,
@@ -107,6 +108,12 @@ export class ApiService {
     return this.http.get<VendorRate[]>(this.baseUrl + '/vendor-process-rates');
   }
 
+  poTrackerProcessOptions(): Observable<PoTrackerProcessOption[]> {
+    return this.http.get<PoTrackerProcessOption[]>(
+      this.baseUrl + '/integrations/potracker/mastersheet/process-options',
+    );
+  }
+
   createMaster<T>(resource: string, payload: object): Observable<T> {
     return this.http.post<T>(this.baseUrl + '/' + resource, payload);
   }
@@ -134,6 +141,14 @@ export class ApiService {
     return this.http.post<CostSheet>(this.baseUrl + '/cost-sheets', payload);
   }
 
+  updateCostSheet(id: number, payload: object): Observable<CostSheet> {
+    return this.http.put<CostSheet>(this.baseUrl + '/cost-sheets/' + id, payload);
+  }
+
+  costSheetByRfqItem(rfqItemId: number): Observable<CostSheet> {
+    return this.http.get<CostSheet>(this.baseUrl + '/cost-sheets/by-rfq-item/' + rfqItemId);
+  }
+
   exportQuotation(id: number, customerPoNumber: string): Observable<{ purchaseOrderId: number; poNumber: string; revision: number; alreadyImported: boolean }> {
     return this.http.post<{ purchaseOrderId: number; poNumber: string; revision: number; alreadyImported: boolean }>(
       this.baseUrl + '/quotations/' + id + '/potracker', { customerPoNumber });
@@ -143,6 +158,18 @@ export class ApiService {
     return this.http.get<Quotation[]>(this.baseUrl + '/quotations');
   }
 
+  quotation(id: number): Observable<Quotation> {
+    return this.http.get<Quotation>(this.baseUrl + '/quotations/' + id);
+  }
+
+  updateQuotation(id: number, payload: object): Observable<Quotation> {
+    return this.http.put<Quotation>(this.baseUrl + '/quotations/' + id, payload);
+  }
+
+  deleteQuotation(id: number): Observable<void> {
+    return this.http.delete<void>(this.baseUrl + '/quotations/' + id);
+  }
+
   quotationPdfUrl(id: number, revision?: number): string {
     const suffix = revision === undefined ? '/pdf' : '/revisions/' + revision + '/pdf';
     return this.baseUrl + '/quotations/' + id + suffix;
@@ -150,6 +177,17 @@ export class ApiService {
 
   quotationPdf(id: number, revision?: number): Observable<Blob> {
     return this.http.get(this.quotationPdfUrl(id, revision), { responseType: 'blob' });
+  }
+
+  quotationCostingPdfUrl(id: number, revision?: number): string {
+    const suffix = revision === undefined
+      ? '/costing-pdf'
+      : '/revisions/' + revision + '/costing-pdf';
+    return this.baseUrl + '/quotations/' + id + suffix;
+  }
+
+  quotationCostingPdf(id: number, revision?: number): Observable<Blob> {
+    return this.http.get(this.quotationCostingPdfUrl(id, revision), { responseType: 'blob' });
   }
 
   createQuotation(payload: object): Observable<Quotation> {

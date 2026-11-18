@@ -17,6 +17,7 @@ export interface Rfq {
 export interface RfqItem {
   id: number;
   rfqId: number;
+  lineItem?: string;
   materialNo: string;
   description?: string;
   drawingNo?: string;
@@ -136,6 +137,13 @@ export interface VendorRate {
   effectiveTo?: string;
 }
 
+export interface PoTrackerProcessOption {
+  id: number;
+  processName: string;
+  vendorName: string;
+  source: 'In-house' | 'Outsource';
+}
+
 export interface MetalWeightResult {
   shape: string;
   mode: string;
@@ -173,6 +181,64 @@ export interface CostSheet {
   unitSellingPrice: number;
 }
 
+export interface QuotationProcessSnapshot {
+  sequence: number;
+  processName: string;
+  processType: string;
+  vendorName?: string;
+  rateType?: string;
+  rate: number;
+  machineRate: number;
+  setupTimeHours: number;
+  cycleTimeHours: number;
+  cost: number;
+}
+
+export interface QuotationCostBreakdown {
+  lines: CostSheetLine[];
+  categoryTotals: Record<string, number>;
+  manufacturingCost: number;
+  overheadPercent: number;
+  overheadAmount: number;
+  costAfterOverhead: number;
+  profitPercent: number;
+  profitAmount: number;
+  sellingPrice: number;
+  unitSellingPrice: number;
+}
+
+export interface QuotationItemSnapshot {
+  id?: number;
+  rfqItemId: number;
+  materialNo: string;
+  description?: string;
+  drawingNo?: string;
+  quantity: number;
+  materialRatePerKg?: number;
+  densityKgM3?: number;
+  rawMaterialShape?: string;
+  rawMaterialDimensions?: string;
+  weightPerPieceKg?: number;
+  totalWeightKg?: number;
+  processRoute: QuotationProcessSnapshot[];
+  costBreakdown: QuotationCostBreakdown;
+  unitPrice: number;
+  totalPrice: number;
+}
+
+export interface QuotationItemWriteRequest {
+  rfqItemId: number;
+  description?: string | null;
+  materialRatePerKg?: number | null;
+  densityKgM3?: number | null;
+  rawMaterialShape?: string | null;
+  rawMaterialDimensions?: string | null;
+  weightPerPieceKg?: number | null;
+  totalWeightKg?: number | null;
+  unitPriceOverride?: number | null;
+  processRoute: QuotationProcessSnapshot[];
+}
+
 export interface Quotation {
   poTrackerPurchaseOrderId?: number;
   poTrackerPoNumber?: string;
@@ -183,9 +249,15 @@ export interface Quotation {
   customerName: string;
   rfqId: number;
   rfqNumber: string;
+  items: QuotationItemSnapshot[];
   revision: number;
   quotationDate: string;
   validUntil?: string;
+  paymentTerms?: string;
+  deliveryTerms?: string;
+  deliveryTime?: string;
+  freightTerms?: string;
+  taxNotes?: string;
   status: string;
   totalPrice: number;
 }

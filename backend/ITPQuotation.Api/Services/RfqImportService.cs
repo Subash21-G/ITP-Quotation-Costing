@@ -25,9 +25,9 @@ public sealed class RfqImportService(
             throw new RfqImportValidationException("RFQ number is required.");
         if (request.Items.Count == 0)
             throw new RfqImportValidationException("At least one RFQ item is required.");
-        var customerId = await ResolveCustomerIdAsync(request, cancellationToken);
         if (await context.Rfqs.AnyAsync(x => x.RfqNumber == rfqNumber, cancellationToken))
             throw new RfqImportConflictException($"RFQ number '{rfqNumber}' already exists.");
+        var customerId = await ResolveCustomerIdAsync(request, cancellationToken);
 
         var rfq = new Rfq
         {

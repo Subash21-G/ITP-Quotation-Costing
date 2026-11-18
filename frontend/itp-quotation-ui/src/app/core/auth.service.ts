@@ -17,7 +17,7 @@ export class AuthService {
   private readonly router = inject(Router);
   private readonly key = 'itp-session';
   readonly session = signal<AuthSession | null>(this.restore());
-  readonly canEdit = computed(() => true);
+  readonly canEdit = computed(() => this.session()?.roles.some(role => role === 'Admin' || role === 'Estimator') ?? false);
 
   token(): string | null {
     const session = this.session();

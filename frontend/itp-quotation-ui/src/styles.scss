@@ -87,3 +87,8 @@ textarea {
   background: #fff3f2;
   font-size: 13px;
 }
+
+// Reserve space for the longer hints in the quotation material form.
+.material-strip .mat-mdc-form-field-subscript-wrapper {
+  min-height: 34px;
+}

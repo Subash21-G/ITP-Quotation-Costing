@@ -74,6 +74,7 @@ The relationship migration requires existing RFQs to reference valid customers a
 | Quotations | GET, POST `/api/quotations` | GET, PUT `/api/quotations/{id}` |
 | Quotation revisions | GET `/api/quotations/{id}/revisions` | GET `/api/quotations/{id}/revisions/{revision}` |
 | Quotation PDF | GET `/api/quotations/{id}/pdf` | GET `/api/quotations/{id}/revisions/{revision}/pdf` |
+| Detailed costing PDF | GET `/api/quotations/{id}/costing-pdf` | GET `/api/quotations/{id}/revisions/{revision}/costing-pdf` |
 
 Filter RFQs with `?customerId=1`. Customer PUT retains the existing requirement that the body ID matches the URL ID. RFQ and item writes use request DTOs; IDs and creation timestamps are server controlled. Item IDs are scoped to their parent RFQ.
 
@@ -99,7 +100,9 @@ Each RFQ item can have one editable cost sheet. Cost lines are ordered by sequen
 
 Creating a quotation produces immutable revision 0. Each PUT is an explicit revision: it increments the revision number, refreshes current item snapshots from the selected RFQ items and cost sheets, and preserves every older revision unchanged. Snapshots include commercial terms, material rate, density, raw dimensions, weights, process/vendor rates, the complete costing breakdown, overhead, profit, and offered unit/total prices. A quoted RFQ cannot be deleted.
 
-Quotation PDFs show the customer, RFQ, material items, offered prices, commercial terms, and revision. The current PDF uses the current quotation snapshot; the revision PDF endpoint always uses the immutable stored revision snapshot.
+The quotation workspace supports multiple items from one selected RFQ. Cost each item separately, save its cost sheet, and add it to the quotation before switching to another item. Creating a revision retains the quotation's other items while replacing only the item being edited.
+
+Quotation PDFs are available in two formats. The standard customer quotation shows offered prices and commercial terms, including raw material size. The detailed costing PDF follows the attached spreadsheet layout and includes material, raw material size, cutting, basic cost, clean process names and their costs listed vertically in matching order, a process total, full table gridlines, profit, subtotal, transport, and total. Current PDF endpoints use the current quotation snapshot; revision PDF endpoints use the immutable stored revision snapshot.
 
 PDF generation uses QuestPDF. Development uses its Evaluation tier through `QuestPdf:License`; set this configuration to the license tier that applies to the deployed business before production use.
 

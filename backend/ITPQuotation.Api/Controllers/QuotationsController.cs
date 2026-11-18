@@ -46,6 +46,10 @@ public sealed class QuotationsController(
         return quotation is null ? NotFound() : Ok(quotation);
     }
 
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken) =>
+        await service.DeleteAsync(id, cancellationToken) ? NoContent() : NotFound();
+
     [HttpGet("{id:int}/revisions")]
     public async Task<ActionResult<IReadOnlyList<QuotationRevisionSummaryResponse>>> ListRevisions(
         int id,
@@ -88,8 +92,36 @@ public sealed class QuotationsController(
             : Pdf(pdfGenerator.Generate(revisionResult.Snapshot), revisionResult.Snapshot);
     }
 
+    [HttpGet("{id:int}/costing-pdf")]
+    public async Task<IActionResult> DownloadDetailedCostingPdf(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var quotation = await service.GetAsync(id, cancellationToken);
+        return quotation is null
+            ? NotFound()
+            : DetailedPdf(pdfGenerator.GenerateDetailedCosting(quotation), quotation);
+    }
+
+    [HttpGet("{id:int}/revisions/{revision:int}/costing-pdf")]
+    public async Task<IActionResult> DownloadRevisionDetailedCostingPdf(
+        int id,
+        int revision,
+        CancellationToken cancellationToken)
+    {
+        var revisionResult = await service.GetRevisionAsync(id, revision, cancellationToken);
+        return revisionResult is null
+            ? NotFound()
+            : DetailedPdf(
+                pdfGenerator.GenerateDetailedCosting(revisionResult.Snapshot),
+                revisionResult.Snapshot);
+    }
+
     private FileContentResult Pdf(byte[] content, QuotationSnapshot quotation) =>
         File(content, "application/pdf", $"Quotation-{SafeFilePart(quotation.QuotationNumber)}-Rev{quotation.Revision}.pdf");
+
+    private FileContentResult DetailedPdf(byte[] content, QuotationSnapshot quotation) =>
+        File(content, "application/pdf", $"Quotation-Costing-{SafeFilePart(quotation.QuotationNumber)}-Rev{quotation.Revision}.pdf");
 
     private static string SafeFilePart(string value) =>
         string.Concat(value.Select(character =>

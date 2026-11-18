@@ -25,7 +25,7 @@ public sealed class CostSheetServiceTests
         Assert.Equal(2, result.Lines.Count);
         Assert.Equal(CostSheetValues.Cnc, result.Lines[1].Category);
         Assert.Equal(1500m, result.ManufacturingCost);
-        Assert.Equal(1980m, result.SellingPrice);
+        Assert.Equal(1750m, result.SellingPrice);
         Assert.Equal(1, await context.CostSheets.CountAsync());
         Assert.Equal(2, await context.CostSheetLines.CountAsync());
     }

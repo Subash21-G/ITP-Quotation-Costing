@@ -25,28 +25,41 @@
   </div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>Quotation</th><th>Customer</th><th>RFQ</th><th>Date</th><th>Status</th><th class="right">Value</th><th>Actions</th></tr></thead>
+      <thead><tr><th>Quotation</th><th>Customer</th><th>RFQ</th><th>Line item no.</th><th>Date</th><th>Status</th><th class="right">Value</th><th>Actions</th></tr></thead>
       <tbody>
         @for (quote of rows(); track quote.id) {
           <tr>
             <td><strong>{{ quote.quotationNumber }}</strong><small>Revision {{ quote.revision }}</small></td>
             <td>{{ quote.customerName }}</td>
             <td>{{ quote.rfqNumber }}</td>
+            <td>{{ lineItemNumbers()[quote.id] ?? '—' }}</td>
             <td>{{ quote.quotationDate | date: 'dd MMM yyyy' }}</td>
             <td><span class="status-pill">{{ quote.status }}</span></td>
             <td class="right money">{{ quote.totalPrice | currency: 'INR' : 'symbol' : '1.2-2' }}</td>
             <td class="right">
-              <button mat-button (click)="downloadPdf(quote)" [disabled]="downloading() !== null">{{ downloading() === quote.id ? 'Downloading…' : 'PDF' }}</button>
+              @if (auth.canEdit()) {
+                <button mat-button type="button" (click)="editQuotation(quote)">Edit</button>
+              }
+              <button mat-button (click)="downloadPdf(quote, 'standard')" [disabled]="downloading() !== null">
+                {{ downloading()?.id === quote.id && downloading()?.format === 'standard' ? 'Downloading…' : 'Quotation PDF' }}
+              </button>
+              <button mat-button (click)="downloadPdf(quote, 'costing')" [disabled]="downloading() !== null">
+                {{ downloading()?.id === quote.id && downloading()?.format === 'costing' ? 'Downloading…' : 'Detailed PDF' }}
+              </button>
               @if (auth.canEdit() && (quote.status === 'Accepted' || quote.status === 'POReceived')) {
                 <button mat-button type="button" [disabled]="exporting()" (click)="selectExport(quote)">Send to POTracker</button>
               }
               @if (quote.poTrackerPurchaseOrderId) {
                 <small>POTracker: {{ quote.poTrackerPoNumber }} · ID {{ quote.poTrackerPurchaseOrderId }} · Revision {{ quote.poTrackerExportedRevision }}</small>
+              } @else if (auth.canEdit()) {
+                <button mat-button type="button" [disabled]="deletingId() !== null" (click)="deleteQuotation(quote)">
+                  {{ deletingId() === quote.id ? 'Deleting…' : 'Delete' }}
+                </button>
               }
             </td>
           </tr>
         } @empty {
-          <tr><td colspan="7" class="empty-row">{{ loading() ? 'Loading quotations…' : 'No quotations created yet.' }}</td></tr>
+          <tr><td colspan="8" class="empty-row">{{ loading() ? 'Loading quotations…' : 'No quotations created yet.' }}</td></tr>
         }
       </tbody>
     </table>

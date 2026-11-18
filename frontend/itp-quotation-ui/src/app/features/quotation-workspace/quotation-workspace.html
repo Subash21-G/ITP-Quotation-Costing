@@ -1,34 +1,87 @@
 <div class="page-heading">
-  <div><h2>Quotation workspace</h2><p>Load an RFQ item, calculate engineering cost, and create a protected quotation revision.</p></div>
-  <span class="workspace-state"><i></i> Draft workspace</span>
+  <div><h2>{{ editingQuotationId() ? 'Edit quotation' : 'Quotation workspace' }}</h2><p>Load an RFQ item, calculate engineering cost, and create a protected quotation revision.</p></div>
+  <span class="workspace-state"><i></i> {{ editingQuotationId() ? 'Revision ' + (quotationStatus) : 'Draft workspace' }}</span>
 </div>
 
 @if (error()) { <div class="error-banner">{{ error() }}</div> }
+@if (editLoading()) { <div class="surface section-card">Loading quotation for editing…</div> }
 
 <div class="workspace">
   <div class="workspace-main">
     <section class="surface section-card">
-      <header><span class="step">01</span><div><h3>RFQ & commercial details</h3><p>Select the source request and set quotation terms.</p></div></header>
+      <header><span class="step">01</span><div><h3>RFQ & commercial details</h3><p>{{ editingQuotationId() ? 'Edit commercial terms; changing the quote creates a new revision.' : 'Select a saved RFQ or enter its details here.' }}</p></div><div class="header-actions">@if (!editingQuotationId()) { <button mat-stroked-button type="button" (click)="manualRfqOpen.set(!manualRfqOpen())">{{ manualRfqOpen() ? 'Hide manual entry' : 'Enter RFQ manually' }}</button> }</div></header>
       <div class="form-grid four">
-        <mat-form-field appearance="outline"><mat-label>Customer</mat-label><mat-select [(ngModel)]="commercial.customerId" (selectionChange)="onCustomer()">@for (customer of customers(); track customer.id) { <mat-option [value]="customer.id">{{ customer.customerName }}</mat-option> }</mat-select></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>RFQ</mat-label><mat-select [(ngModel)]="commercial.rfqId" (selectionChange)="onRfq()">@for (rfq of rfqs(); track rfq.id) { <mat-option [value]="rfq.id">{{ rfq.rfqNumber }}</mat-option> }</mat-select></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>RFQ item</mat-label><mat-select [(ngModel)]="commercial.rfqItemId" (selectionChange)="onItem()">@for (item of items(); track item.id) { <mat-option [value]="item.id">{{ item.materialNo }} · {{ item.quantity }} {{ item.unit }}</mat-option> }</mat-select></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Quotation number</mat-label><input matInput [(ngModel)]="commercial.quotationNumber" placeholder="Generated after selecting an RFQ item" /><mat-hint>Generated automatically; editable before creation</mat-hint></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Customer</mat-label><mat-select [(ngModel)]="commercial.customerId" (selectionChange)="onCustomer()" [disabled]="editingQuotationId() !== null">@for (customer of customers(); track customer.id) { <mat-option [value]="customer.id">{{ customer.customerName }}</mat-option> }</mat-select></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>RFQ</mat-label><mat-select [(ngModel)]="commercial.rfqId" (selectionChange)="onRfq()" [disabled]="editingQuotationId() !== null">@for (rfq of rfqs(); track rfq.id) { <mat-option [value]="rfq.id">{{ rfq.rfqNumber }}</mat-option> }</mat-select></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>RFQ item</mat-label><mat-select [(ngModel)]="commercial.rfqItemId" (selectionChange)="onItem()" [disabled]="editingQuotationId() !== null || !canSwitchRfqItem()"><mat-select-trigger>@if (selectedRfqItem(); as item) { Line {{ item.lineItem || '—' }} · {{ item.materialNo }} }</mat-select-trigger>@for (item of items(); track item.id) { <mat-option [value]="item.id">Line {{ item.lineItem || '—' }} · {{ item.materialNo }} · {{ item.quantity }} {{ item.unit }}</mat-option> }</mat-select></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Quotation number</mat-label><input matInput [(ngModel)]="commercial.quotationNumber" placeholder="Generated after selecting an RFQ item" [disabled]="editingQuotationId() !== null" /><mat-hint>{{ editingQuotationId() ? 'Quotation number is fixed for revisions' : 'Generated automatically; editable before creation' }}</mat-hint></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Quotation date</mat-label><input matInput type="date" [(ngModel)]="commercial.quotationDate" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Valid until</mat-label><input matInput type="date" [(ngModel)]="commercial.validUntil" /></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Payment terms</mat-label><input matInput [(ngModel)]="commercial.paymentTerms" /></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Delivery terms</mat-label><input matInput [(ngModel)]="commercial.deliveryTerms" /></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Delivery time</mat-label><input matInput [(ngModel)]="commercial.deliveryTime" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Freight terms</mat-label><input matInput [(ngModel)]="commercial.freightTerms" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Tax notes</mat-label><input matInput [(ngModel)]="commercial.taxNotes" /></mat-form-field>
       </div>
+      <div class="staged-items">
+        <div class="staged-items-heading">
+          <div><strong>Quotation items · {{ quotationItems().length }}</strong><small>Save each item's cost sheet, then add it here before selecting another RFQ item.</small></div>
+          @if (selectedRfqItem()) {
+            <div class="staged-item-actions">
+              <button mat-stroked-button type="button" [disabled]="busy() || !canStageCurrentItem()" (click)="stageCurrentItem()">
+                {{ isCurrentItemStaged() ? 'Update quotation item' : 'Add quotation item' }}
+              </button>
+              @if (!isCurrentItemStaged() && editingQuotationId() === null) {
+                <button mat-button type="button" [disabled]="busy()" (click)="discardCurrentItem()">Discard selection</button>
+              }
+            </div>
+          }
+        </div>
+        @if (quotationItems().length) {
+          <div class="staged-item-list">
+            @for (item of quotationItems(); track item.request.rfqItemId) {
+              <div class="staged-item">
+                <span>Line {{ item.lineItem }} · {{ item.materialNo }}</span>
+                <span>{{ item.quantity }} {{ item.unit }}</span>
+                <strong>{{ item.totalPrice | currency: 'INR' : 'symbol' : '1.2-2' }}</strong>
+                @if (editingQuotationId() === null) {
+                  <button mat-button type="button" (click)="removeQuotationItem(item.request.rfqItemId)" aria-label="Remove item from quotation">Remove</button>
+                }
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="staged-items-empty">No items added. The selected RFQ item will be included after its cost sheet is saved.</p>
+        }
+      </div>
+      @if (manualRfqOpen()) {
+        <div class="manual-rfq">
+          <p>Use the selected customer above, or enter a new customer name. Saving these details creates a Draft RFQ and selects its item for this quotation.</p>
+          <div class="form-grid four">
+            <mat-form-field appearance="outline"><mat-label>New customer name</mat-label><input matInput maxlength="200" [(ngModel)]="manualRfq.customerName" /></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>RFQ number</mat-label><input matInput maxlength="100" [(ngModel)]="manualRfq.rfqNumber" /></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>RFQ date</mat-label><input matInput type="date" [(ngModel)]="manualRfq.rfqDate" /></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Line item no.</mat-label><input matInput maxlength="100" [(ngModel)]="manualRfq.lineItem" /></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Material number</mat-label><input matInput maxlength="100" [(ngModel)]="manualRfq.materialNo" /></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Short description</mat-label><input matInput maxlength="500" [(ngModel)]="manualRfq.description" /></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Quantity</mat-label><input matInput type="number" min="0.001" step="0.001" [(ngModel)]="manualRfq.quantity" /></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Unit</mat-label><input matInput maxlength="30" [(ngModel)]="manualRfq.unit" /></mat-form-field>
+          </div>
+          <button mat-flat-button type="button" [disabled]="busy()" (click)="addManualRfq()">{{ busy() ? 'Saving…' : 'Add RFQ details' }}</button>
+        </div>
+      }
     </section>
 
     <section class="surface section-card">
-      <header><span class="step">02</span><div><h3>Material & weight</h3><p>Shape and dimensions are suggested from the RFQ description and remain editable.</p></div><button mat-stroked-button (click)="refreshMetalData()">Refresh density & rate</button><button mat-stroked-button (click)="loadMaterial()">Load material</button></header>
+      <header><span class="step">02</span><div><h3>Material & weight</h3><p>Shape and dimensions are suggested from the RFQ description and remain editable.</p></div><div class="header-actions"><button mat-stroked-button (click)="refreshMetalData()">Refresh density & rate</button><button mat-stroked-button (click)="loadMaterial()">Load material</button></div></header>
       <div class="material-strip">
         <mat-form-field appearance="outline"><mat-label>Material number</mat-label><input matInput [(ngModel)]="engineering.materialNo" /></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Short description</mat-label><input matInput maxlength="500" [(ngModel)]="engineering.shortDescription" /><mat-hint>From RFQ or material master; editable</mat-hint></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Metal</mat-label><mat-select [(ngModel)]="engineering.metalId" (selectionChange)="onMetal()"><mat-option [value]="0">{{ detectedMetal() }} (from RFQ)</mat-option>@for (metal of metals(); track metal.id) { <mat-option [value]="metal.id">{{ metal.name }} {{ metal.grade || '' }}</mat-option> }</mat-select><mat-hint>Latest master value is selected automatically; you can override it</mat-hint></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Specific gravity</mat-label><input matInput type="number" step="0.01" [(ngModel)]="specificGravity" /><mat-hint>From metal master; editable for this quote</mat-hint></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Density kg/m³</mat-label><input matInput type="number" [(ngModel)]="engineering.densityKgM3" /></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Current rate / kg</mat-label><input matInput type="number" [(ngModel)]="engineering.materialRatePerKg" (change)="calculateMaterialCost()" /><mat-hint>Fetched from the metal master; editable for today's quote</mat-hint></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Current rate / kg</mat-label><input matInput type="text" inputmode="decimal" [ngModel]="materialRateInput" (ngModelChange)="setMaterialRateInput($event)" (change)="calculateMaterialCost()" /><mat-hint>Fetched from the metal master; editable for today's quote</mat-hint></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Raw material size</mat-label><input matInput maxlength="500" [ngModel]="currentRawMaterialSize()" (ngModelChange)="rawMaterialDimensions.set($event)" /><mat-hint>Auto-filled from detected dimensions or material master; editable</mat-hint></mat-form-field>
       </div>
 
       <div class="shape-picker">
@@ -81,29 +134,103 @@
 
     <section class="surface section-card">
       <header><span class="step">03</span><div><h3>Process route & additional costs</h3><p>Review loaded operations and enter the cost for this quotation quantity.</p></div></header>
+      <div class="master-process-picker">
+        <label>Add process/vendor from connected masters</label>
+        <div
+          class="master-process-controls"
+          [class.in-house]="selectedMasterProcessSource() === 'In-house'"
+        >
+          <label class="master-process-field" for="quotationProcessName">
+            Process
+            <select
+              id="quotationProcessName"
+              [ngModel]="selectedMasterProcessName()"
+              (ngModelChange)="onMasterProcessChanged($event)"
+            >
+              <option value="">Select process</option>
+              @for (processName of masterProcessNames(); track processName) {
+                <option [value]="processName">{{ processName }}</option>
+              }
+            </select>
+          </label>
+          <label class="master-process-field" for="quotationProcessSource">
+            In-house / Outsource
+            <select
+              id="quotationProcessSource"
+              [ngModel]="selectedMasterProcessSource()"
+              (ngModelChange)="onMasterProcessSourceChanged($event)"
+              [disabled]="!selectedMasterProcessName()"
+            >
+              <option value="">Select type</option>
+              @for (source of masterProcessSources; track source) {
+                <option [value]="source">{{ source }}</option>
+              }
+            </select>
+          </label>
+          @if (selectedMasterProcessSource() !== 'In-house') {
+            <label class="master-process-field" for="quotationProcessVendor">
+              Vendor
+              <select
+                id="quotationProcessVendor"
+                [ngModel]="selectedMasterProcessVendorKey()"
+                (ngModelChange)="selectedMasterProcessVendorKey.set($event)"
+                [disabled]="!selectedMasterProcessName() || !selectedMasterProcessSource()"
+              >
+                <option value="">Select vendor</option>
+                @for (vendor of masterProcessVendors(); track vendor.key) {
+                  <option [value]="vendor.key">{{ vendor.vendorName || 'No vendor' }}</option>
+                }
+              </select>
+            </label>
+          }
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="!canAddSelectedMasterProcess()"
+            (click)="addSelectedMasterProcess()"
+          >Add selected process</button>
+        </div>
+        @if (processOptionsLoading()) {
+          <p>Loading POTracker process/vendor options…</p>
+        } @else if (processOptionsError()) {
+          <p class="option-error">{{ processOptionsError() }}</p>
+        } @else if (processOptions().length === 0) {
+          <p>No process/vendor options found in either master. You can still add costs manually.</p>
+        }
+      </div>
       <div class="cost-table">
-        <div class="cost-head"><span>#</span><span>Category</span><span>Description</span><span>Amount</span><span></span></div>
-        @for (line of processLines(); track $index; let index = $index) {
+        <div class="cost-head"><span>#</span><span>Process</span><span>Description</span><span>Amount</span><span>Actions</span></div>
+        @for (line of processLines(); track line; let index = $index) {
           <div class="cost-row">
             <span>{{ line.sequence }}</span>
-            <select [(ngModel)]="line.category">@for (category of categories; track category) { <option [value]="category">{{ category }}</option> }</select>
-            <input [(ngModel)]="line.description" placeholder="Operation or cost note" />
-            <input type="number" [(ngModel)]="line.amount" />
-            <button (click)="removeLine(index)">×</button>
+            <span class="process-name">{{ line.processName || '—' }}</span>
+            <div class="cost-description">
+              <input [(ngModel)]="line.description" placeholder="Operation or cost note" />
+              @if (line.route; as route) {
+                <small>{{ route.processType }} @if (route.vendorName) { · {{ route.vendorName }} } · {{ line.rateType }} rate {{ line.rate | currency: 'INR' : 'symbol' : '1.2-2' }} @if (route.processType === 'InHouse') { / hour · setup {{ route.setupTimeHours }} h · cycle {{ route.cycleTimeHours }} h } @if (route.notes) { · {{ route.notes }} }</small>
+              }
+            </div>
+            <input class="cost-amount" type="number" [ngModel]="lineAmount(line) || null" (ngModelChange)="setLineAmount(line, $event)" />
+            <div class="cost-actions">
+              <button class="add-row" type="button" (click)="addLine(index)" [attr.aria-label]="'Add cost row after ' + (line.processName || line.description || 'this row')" title="Add row">+</button>
+              <button class="remove-row" type="button" (click)="removeLine(index)" [attr.aria-label]="'Remove ' + (line.processName || line.description || 'cost row')" title="Remove row">×</button>
+            </div>
+          </div>
+        } @empty {
+          <div class="cost-row empty">
+            <span>—</span>
+            <span class="process-name">—</span>
+            <span class="empty-message">No process or additional cost lines.</span>
+            <span class="empty-amount">—</span>
+            <div class="cost-actions">
+              <button class="add-row" type="button" (click)="addLine(-1)" aria-label="Add first cost row" title="Add row">+</button>
+            </div>
           </div>
         }
-        <div class="cost-row add">
-          <span>+</span>
-          <select [(ngModel)]="newLine.category">@for (category of categories; track category) { <option [value]="category">{{ category }}</option> }</select>
-          <input [(ngModel)]="newLine.description" placeholder="Add process, packing, transport…" />
-          <input type="number" [(ngModel)]="newLine.amount" />
-          <button (click)="addLine()">Add</button>
-        </div>
       </div>
       <div class="margin-row">
-        <mat-form-field appearance="outline"><mat-label>Transport cost (₹, total)</mat-label><input matInput type="number" min="0" [(ngModel)]="transportCost" /><mat-hint>From RFQ PDF if found; otherwise enter manually</mat-hint></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Overhead %</mat-label><input matInput type="number" [(ngModel)]="margins.overheadPercent" /></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Profit %</mat-label><input matInput type="number" [(ngModel)]="margins.profitPercent" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Transport %</mat-label><input matInput type="number" min="0" max="100" step="0.1" [(ngModel)]="transportPercent" /><mat-hint>Of raw material + cutting + process + profit</mat-hint></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Profit %</mat-label><input matInput type="number" [(ngModel)]="margins.profitPercent" /><mat-hint>Applied to process costs only</mat-hint></mat-form-field>
       </div>
     </section>
   </div>
@@ -112,17 +239,27 @@
     <div class="summary-head"><span>Live cost summary</span><h3>{{ engineering.materialNo || 'Unselected item' }}</h3><p>{{ engineering.quantity }} piece quotation</p></div>
     <div class="summary-lines">
       <div><span>Raw material</span><strong>{{ rawMaterialCost() | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
-      <div><span>Process & additional</span><strong>{{ processCost() | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
-      <div><span>Transport</span><strong>{{ transportCost | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
+      <div><span>Cutting</span><strong>{{ cuttingCost() | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
+      <div><span>Basic cost</span><strong>{{ basicCost() | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
+      @for (line of summaryProcessLines(); track $index) {
+        <div>
+          <span>{{ line.processName || line.description || 'Additional process' }}</span>
+          <strong>{{ lineAmount(line) | currency: 'INR' : 'symbol' : '1.2-2' }}</strong>
+        </div>
+      } @empty {
+        <div><span>Process & additional</span><strong>{{ processCost() | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
+      }
       <div class="subtotal"><span>Manufacturing cost</span><strong>{{ manufacturingCost() | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
-      <div><span>Overhead ({{ margins.overheadPercent }}%)</span><strong>{{ overheadAmount() | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
-      <div><span>Cost after overhead</span><strong>{{ costAfterOverhead() | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
       <div><span>Profit ({{ margins.profitPercent }}%)</span><strong>{{ profitAmount() | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
+      <div><span>Transport ({{ transportPercent }}%)</span><strong>{{ transportCost() | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
     </div>
     <div class="grand-total"><span>Final quotation</span><strong>{{ finalPrice() | currency: 'INR' : 'symbol' : '1.2-2' }}</strong><small>{{ unitPrice() | currency: 'INR' : 'symbol' : '1.2-2' }} per piece</small></div>
     <div class="summary-actions">
-      <button mat-stroked-button [disabled]="busy()" (click)="saveCostSheet()">{{ costSheet() ? 'Cost sheet saved' : 'Save cost sheet' }}</button>
-      <button mat-flat-button [disabled]="busy() || !costSheet()" (click)="createQuotation()">Create quotation</button>
+      @if (editingQuotationId()) {
+        <button mat-button [disabled]="busy()" (click)="cancelEditing()">Cancel edit</button>
+      }
+      <button mat-stroked-button [disabled]="busy()" (click)="saveCostSheet()">{{ costSheet() ? (editingQuotationId() ? 'Save cost changes' : 'Cost sheet saved') : 'Save cost sheet' }}</button>
+      <button mat-flat-button [disabled]="busy() || !canCreateQuotation() || editLoading()" (click)="createQuotation()">{{ editingQuotationId() ? 'Save quotation revision' : 'Create quotation' }}</button>
     </div>
     <p class="snapshot-note">A revision snapshot will protect these rates, costs, and commercial terms.</p>
   </aside>

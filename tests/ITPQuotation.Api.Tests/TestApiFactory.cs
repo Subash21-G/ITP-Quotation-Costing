@@ -22,6 +22,7 @@ public sealed class TestApiFactory : WebApplicationFactory<ApiAssemblyMarker>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
+        builder.ConfigureLogging(logging => logging.ClearProviders());
         builder.ConfigureServices(services =>
         {
             if (UseTestAuthentication)
